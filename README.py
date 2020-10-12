@@ -24,4 +24,12 @@ wsgi 방식으로 전환
 3. root - folder 생성 
    - package : __init__.py (O)
    - directory : __init__.py (X)
+
+
+
+rnn
+lstm
+
+앞의 결과가 뒤의 결과에 영향을 준다.
+-> 조건부 확률 (베이지안)
 '''
