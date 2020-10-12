@@ -5,19 +5,28 @@ from pandas import read_table
 import numpy as np
 from collections import defaultdict
 import math
-
+'''
+def is_number(number):
+    try :
+        float(number)
+        return True
+    except ValueError:
+        return False
+'''
 class MovieReview:
-    def __init__(self):
+    def __init__(self, k = 0.5):
+        self.k = k
         self.reader = FileReader()
 
     def hook(self):
         print('==== Hook ====')
-        self.load_corpus()
+        self.train()
+        print(self.classify('그럭저럭 볼 만 했다.'))
 
     def load_corpus(self):
         reader = self.reader
         corpus = read_table('./data/movie_review.csv', sep=',', encoding='UTF-8')
-        print(f'Corpus Spec : {corpus}')
+        # print(f'Corpus Spec : {corpus}')
         return np.array(corpus)
 
     def count_words(self, traing_set):
@@ -53,7 +62,21 @@ class MovieReview:
                 log_prob_if_class0 += math.log(1.0 - prob_if_class0)
                 log_prob_if_class1 += math.log(1.0 - prob_if_class1)
 
-        # prob_if_class0 = 
+        prob_if_class0 = math.exp(log_prob_if_class0)
+        prob_if_class1 = math.exp(log_prob_if_class1)
+
+        return prob_if_class0 / (prob_if_class0 + prob_if_class1)
+
+    def train(self):
+        training_set = self.load_corpus()
+        # 범주 0 (긍정), 범주 1 (부정) 문서의 수를 세어줌
+        num_class0 = len([1 for _, point in training_set if point > 3.5 ]) 
+        num_class1 = len(training_set) - num_class0
+        word_counts = self.count_words(training_set)
+        self.word_probs = self.word_probabilities(word_counts, num_class0, num_class1, self.k)
+
+    def classify(self, doc):
+        return self.class0_probability(self.word_probs, doc)
 
 
 mr = MovieReview()
