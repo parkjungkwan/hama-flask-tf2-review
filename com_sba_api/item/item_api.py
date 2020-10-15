@@ -1,13 +1,15 @@
 from flask_restful import Resource
 from flask import Response, jsonify
 from com_sba_api.item.item_dao import ItemDao
+from fastapi import ApiRouter, HTTPExceiption
 
-class ItemsApi(Resource):
+
+class ItemApi(Resource):
 
     def __init__(self):
+        self.api = ApiRouter()
         self.dao = ItemDao()
 
-    def get(self):
-       items = self.dao.select_items()
-       return jsonify(items)
+  
+
         
