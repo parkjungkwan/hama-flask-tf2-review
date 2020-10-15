@@ -9,5 +9,5 @@ class ItemsApi(Resource):
 
     def get(self):
        items = self.dao.select_items()
-       return jsonify(items[0])
+       return jsonify(items)
         
