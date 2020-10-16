@@ -2,9 +2,9 @@ from flask import Flask
 from flask_restful import Api
 from com_sba_api.ext.db import url
 from com_sba_api.ext.routes import initialize_routes
-from resources.item import Item, ItemList
-from resources.store import Store, StoreList
-from resources.user import UserRegister
+from com_sba_api.item import Item, Items
+from com_sba_api.article import Article, Articles
+from com_sba_api.user import User, Users
 
 app = Flask(__name__)
 
