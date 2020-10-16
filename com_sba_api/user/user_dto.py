@@ -1,13 +1,18 @@
 from com_sba_api.ext.db import db
 
-class UserModel(db.Model):
+class UserDto(db.Model):
 
     __tablename__ = 'users'
     __table_args__={'mysql_collate':'utf8_general_ci'}
 
-    userid = db.Column(db.String(30), primary_key = True, index = True)
-    password = db.Column(db.String(30))
-    name = db.Column(db.String(30))
+    userid: str = db.Column(db.String(30), primary_key = True, index = True)
+    password: str = db.Column(db.String(30))
+    name: str = db.Column(db.String(30))
+
+    def __init__(self, userid, password, name):
+        self.userid = userid
+        self.password = password
+        self.name = name
 
     def __repr__(self):
         return f'User(id={self.id},userid={self.userid},\
@@ -29,9 +34,5 @@ class UserModel(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-class UserDto(object):
-    userid: str
-    password: str
-    name: str
 
 

@@ -12,18 +12,18 @@ class User(Resource):
 
     @jwt_required()  # Requires dat token
     def get(self, name):
-        item = user_dao.find_by_name(name)
+        item = self.dao.find_by_name(name)
         if item:
             return item.json()
         return {'message': 'Item not found'}, 404
 
     @jwt_required()
     def post(self, name):
-        if ItemModel.find_by_name(name):
+        if self.dao.find_by_name(name):
             return {'message': "An item with name '{}' already exists.".format(name)}, 400
 
         data = User.parser.parse_args()
-        item = ItemModel(name, data['price'], data['store_id'])
+        item = UserModel(name, data['price'], data['store_id'])
 
         try:
             item.save_to_db()

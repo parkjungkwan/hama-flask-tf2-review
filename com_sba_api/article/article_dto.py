@@ -6,18 +6,19 @@ class Article(Base):
     __tablename__ = "articles"
     __table_args__={'mysql_collate':'utf8_general_ci'}
 
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
-    item_id = db.Column(db.Integer, db.ForeignKey(Item.id))
-    title = db.Column(db.String)
-    content = db.Column(db.String)
+    id: int = db.Column(db.Integer, primary_key=True, index=True)
+    title: str = db.Column(db.String(100))
+    content: str = db.Column(db.String(500))
+
+    user_id: int = db.Column(db.Integer, db.ForeignKey(User.id))
+    item_id: int = db.Column(db.Integer, db.ForeignKey(Item.id))
 
     def __repr__(self):
         return f'id={self.id}, user_id={self.user_id}, item_id={self.item_id},\
             title={self.title}, content={self.content}'
 
     @property
-    def serialize(self):
+    def json(self):
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -26,10 +27,11 @@ class Article(Base):
             'content' : self.content
         }
 
-class ArticleDto(object):
-    id: int
-    user_id: int
-    item_id: int
-    title: str
-    content: str
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
 

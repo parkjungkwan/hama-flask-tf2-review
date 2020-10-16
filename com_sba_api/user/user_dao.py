@@ -10,12 +10,18 @@ from com_sba_api.user import User
 class UserDao(db.Model):
 
     @classmethod
-    def fetch_user_by_id(cls, userid):
+    def fetch_all_users(cls):
+        return cls.query.all()
+
+    @classmethod
+    def fetch_users_by_name(cls, name):
+        return cls.
+
+    @classmethod
+    def fetch_user_by_user_id(cls, userid):
         return cls.query.filter_by(userid == userid).first()
         
-    @classmethod
-    def fetch_all_users(self):
-        ...
+    
 
     
 
