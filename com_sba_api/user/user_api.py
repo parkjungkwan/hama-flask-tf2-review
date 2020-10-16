@@ -7,5 +7,5 @@ class UserApi(object):
     def __init__(self):
         self.router = APIRouter()
 
-    def get_router(self):
+    def getRouter(self):
         return self.router

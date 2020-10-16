@@ -10,6 +10,9 @@ class Item(Base):
     name = Column(String)
     price = Column(String)
 
+    def __repr__(self):
+        return f''
+
 class ItemDto(BaseModel):
     id: int
     name: str

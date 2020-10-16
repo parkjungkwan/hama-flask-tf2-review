@@ -18,11 +18,21 @@ class UserDao():
     def create_table(self):
         Base.metadata.create_all(self.engine)
 
-    def insert_user(self):
-        session.add(User(userid='tom', password='1', name='thomas'))
+    def add_user(self, user):
+        # User(userid='tom', password='1', name='thomas')
+        session.add(user)
         session.commit()
 
     def fetch_user(self):
         query = session.query(User).filter((User.userid == 'tom'))
         return query[0]
+
+    def fetch_all_users(self):
+        ...
+
+    def update_user(self):
+        ...
+
+    def delete_user(self):
+        ...
 
