@@ -1,8 +1,8 @@
 from com_sba_api.ext.db import db
-from com_sba_api.user import User
-from com_sba_api.item import Item
+from com_sba_api.user.dto import UserDto
+from com_sba_api.item.dto import ItemDto
 
-class Article(Base):
+class ArticleDto(db.Model):
     __tablename__ = "articles"
     __table_args__={'mysql_collate':'utf8_general_ci'}
 
@@ -10,18 +10,24 @@ class Article(Base):
     title: str = db.Column(db.String(100))
     content: str = db.Column(db.String(500))
 
-    user_id: int = db.Column(db.Integer, db.ForeignKey(User.id))
-    item_id: int = db.Column(db.Integer, db.ForeignKey(Item.id))
+    userid: str = db.Column(db.String(30), db.ForeignKey(UserDto.userid))
+    item_id: int = db.Column(db.Integer, db.ForeignKey(ItemDto.id))
+
+    def __init__(self, title, content, userid, item_id):
+        self.title = title
+        self.content = content
+        self.userid = userid
+        self.item_id = item_id
 
     def __repr__(self):
-        return f'id={self.id}, user_id={self.user_id}, item_id={self.item_id},\
+        return f'id={self.id}, user_id={self.userid}, item_id={self.item_id},\
             title={self.title}, content={self.content}'
 
     @property
     def json(self):
         return {
             'id': self.id,
-            'user_id': self.user_id,
+            'userid': self.userid,
             'item_id' : self.item_id,
             'title' : self.title,
             'content' : self.content
