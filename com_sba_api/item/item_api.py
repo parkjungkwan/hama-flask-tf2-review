@@ -10,6 +10,9 @@ class ItemApi(Resource):
         self.api = ApiRouter()
         self.dao = ItemDao()
 
+class ItemsApi(Resource):
+    ...
+
   
 
         

@@ -1,19 +1,19 @@
-from pydantic import BaseModel
-from sqlalchemy import Column, Integer, String, ForeignKey
-from com_sba_api.ext.db import Base
+from com_sba_api.ext.db import db
 
-class Item(Base):
+class ItemModel(db.Model):
     __tablename__='items'
     __table_args__={'mysql_collate':'utf8_general_ci'}
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    price = Column(String)
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    name = db.Column(db.String(30))
+    price = db.Column(db.String(30))
+
+    articles = db.relationship('ArticleModel', lazy='dynamic')
 
     def __repr__(self):
         return f''
 
-class ItemDto(BaseModel):
+class ItemDto(object):
     id: int
     name: str
     price: str
