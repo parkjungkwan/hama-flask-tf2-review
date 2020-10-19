@@ -25,6 +25,3 @@ initialize_routes(api)
 with app.app_context():
     db.create_all()
 
-@app.route('/api/test')
-def test():
-    return {'test':'SUCCESS'}
