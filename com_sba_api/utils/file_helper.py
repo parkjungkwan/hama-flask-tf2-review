@@ -23,6 +23,7 @@ class FileReader:
     test: object = None
     id : str = ''
     lable : str = ''
+    
 
     def new_file(self) -> str:
         return os.path.join(self.context,self.fname)

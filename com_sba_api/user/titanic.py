@@ -1,8 +1,12 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from com_sba_api.utils.file_helper import FileReader
+from util.file_handler import FileReader
 import pandas as pd
 import numpy as np
+from config import basedir
+# sklearn algorithm : classification, regression, clustring, reduction
 from sklearn.ensemble import RandomForestClassifier # rforest
 from sklearn.tree import DecisionTreeClassifier # dtree
 from sklearn.ensemble import RandomForestClassifier # rforest
@@ -32,11 +36,11 @@ Fare 요금,
 Cabin 객실번호,
 Embarked 승선한 항구명 C = 쉐브루, Q = 퀸즈타운, S = 사우스햄튼
 """
-class UserPro:
+class Service:
     def __init__(self):
         self.fileReader = FileReader()  
-        self.data = './data'
-        
+        self.kaggle = os.path.join(basedir, 'kaggle')
+        self.data = os.path.join(self.kaggle, 'data')
     
     def new_model(self, payload) -> object:
         this = self.fileReader
@@ -55,7 +59,7 @@ class UserPro:
     @staticmethod
     def drop_feature(this, feature) -> object:
         this.train = this.train.drop([feature], axis = 1)
-        this.test = this.test.drop([feature], axis = 1) #p.149 에 보면 훈련, 테스트 세트로 나눈다
+        this.test = this.test.drop([feature], axis = 1) # p.149 에 보면 훈련, 테스트 세트로 나눈다
         return this
 
 
@@ -181,35 +185,35 @@ class UserPro:
 
     def accuracy_by_dtree(self, this):
         dtree = DecisionTreeClassifier()
-        score = cross_val_score(dtree, this.train, this.label, cv=UserPro.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(dtree, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
     def accuracy_by_rforest(self, this):
         rforest = RandomForestClassifier()
-        score = cross_val_score(rforest, this.train, this.label, cv=UserPro.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(rforest, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_nb(self, this):
         nb = GaussianNB()
-        score = cross_val_score(nb, this.train, this.label, cv=UserPro.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(nb, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_knn(self, this):
         knn = KNeighborsClassifier()
-        score = cross_val_score(knn, this.train, this.label, cv=UserPro.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(knn, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
     def accuracy_by_svm(self, this):
         svm = SVC()
-        score = cross_val_score(svm, this.train, this.label, cv=UserPro.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(svm, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
 class Controller:
     def __init__(self):
         self.fileReader = FileReader()  
-        self.data = './data'
-        self.service = UserPro()
-        self.odf = None
+        self.kaggle = os.path.join(basedir, 'kaggle')
+        self.data = os.path.join(self.kaggle, 'data')
+        self.service = Service()
 
     def modeling(self, train, test):
         service = self.service
@@ -225,20 +229,6 @@ class Controller:
         this = self.fileReader
         this.train = service.new_model(train) # payload
         this.test = service.new_model(test) # payload
-        
-        '''
-        모델 생성
-        '''
-        self.odf = pd.DataFrame(
-
-            {
-             'userid' : this.train.PassengerId,
-             'password' : '1',
-             'name' : this.train.Name
-             }
-        )
-        
-
         this.id = this.test['PassengerId'] # machine 이에게는 이것이 question 이 됩니다. 
         print(f'정제 전 Train 변수 : {this.train.columns}')
         print(f'정제 전 Test 변수 : {this.test.columns}')
@@ -287,30 +277,14 @@ class Controller:
         clf = RandomForestClassifier()
         clf.fit(this.train, this.label)
         prediction = clf.predict(this.test)
-        
-        print(this)
-        # Pclass  Sex   Age  Parch  Embarked  Title AgeGroup
-        df = pd.DataFrame(
-
-            {
-             'pclass': this.train.Pclass,
-             'gender': this.train.Sex, 
-             'age_group': this.train.AgeGroup,
-             'embarked' : this.train.Embarked,
-             'rank' : this.train.Title
-             }
-        )
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        # print(self.odf)
-        # print(df)
-        sumdf = pd.concat([self.odf, df], axis=1)
-        print(sumdf)
+        pd.DataFrame(
+            {'PassengerId' : this.id, 'Survived' : prediction}
+        ).to_csv(os.path.join(self.data, 'submission.csv'), index=False)
 
 
 
 if __name__ == '__main__':
+    print(f'********* {basedir} *********')
     ctrl = Controller()
     ctrl.submit('train.csv','test.csv')
+    
