@@ -1,16 +1,10 @@
-from com_sba_api.ext.db import Base, Session, engine
+from com_sba_api.ext.db import db, openSession
 from com_sba_api.user.service import UserService
-import time
+from com_sba_api.user.dto import UserDto
 
-'''
-pip install sqlalchemy-easy-profile
-'''
 class UserDao(object):
     def __init__(self):
-        engine = create_engine("postgres+psycopg2://postgres:pass@localhost/mydb")
-        session = Session(bind=engine)
-
-        
+        ...
         
 
     @classmethod
@@ -25,44 +19,38 @@ class UserDao(object):
     def find_by_id(cls, userid):
         return cls.query.filter_by(userid == userid).first()
 
-    
-    def add_user():
-        my_data = Data(name, email, phone)
-        db.session.add(my_data)
+    @staticmethod
+    def save(user):
+        db.session.add(user)
         db.session.commit()
- 
-        flash("Employee Inserted Successfully")
-    
-    
-    def insert_many(cls, table, n = 10000):
-        print('-- 2 --')
+
+    @staticmethod   
+    def insert_many():
         service = UserService()
+        Session = openSession()
+        session = Session()
         df = service.hook()
-        print(df)
-        t0 = time.time()
-        Session = sessionmaker(bind=dest_db_con)
-        Session.bulk_insert_mappings(cls,
-                                    table[:n].to_dict(orient="record"))
+        print(df.head())
+        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
+        session.commit()
+        session.close()
 
-        Session.commit()
-        print("SQLAlchemy ORM bulk_insert_mappings(): Total time for " + str(n) +
-            " records " + str(time.time() - t0) + " secs")
-
-    def modify_user():
-        my_data = {}
-        
+    @staticmethod
+    def modify_user(user):
+        db.session.add(user)
         db.session.commit()
-        flash("Employee Updated Successfully")
 
-    def delete_user():
-        my_data = Data.query.get(id)
-        db.session.delete(my_data)
+    @classmethod
+    def delete_user(cls,id):
+        data = cls.query.get(id)
+        db.session.delete(data)
         db.session.commit()
-        flash("Employee Deleted Successfully")
         
     
 
-    
-
+'''    
+u = UserDao()
+u.insert_many()
+'''
     
 

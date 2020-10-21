@@ -15,11 +15,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 api = Api(app)
-
+'''
 @app.before_first_request
 def create_tables():
     db.create_all()
-
+'''
 initialize_routes(api)
 
 with app.app_context():

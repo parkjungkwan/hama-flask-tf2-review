@@ -37,7 +37,8 @@ Embarked : a Port Name on Board C = Cherbourg, Q = Queenstown, S = Southhampton
 class UserService:
     def __init__(self):
         self.fileReader = FileReader()  
-        self.data = os.path.abspath("com_sba_api/user/data")
+        self.data = os.path.abspath("data")
+        
         self.odf = None
 
     def hook(self):
@@ -69,8 +70,9 @@ class UserService:
         # print(f'Preprocessing Embarked Variable: {this.train.head()}')
         this = self.title_norminal(this)
         # print(f'Preprocessing Title Variable: {this.train.head()}')
-        # name 변수에서 title 을 추출했으니 name 은 필요가 없어졌고, str 이니 
-        # 후에 ML-lib 가 이를 인식하는 과정에서 에러를 발생시킬것이다.
+        '''
+        The name is unnecessary because we extracted the Title from the name variable.
+        '''
         this = self.drop_feature(this, 'Name')
         this = self.drop_feature(this, 'PassengerId')
         this = self.age_ordinal(this)
@@ -133,7 +135,9 @@ userid password                                               name  pclass  gend
         this = self.fileReader
         this.data = self.data
         this.fname = payload
-        return pd.read_csv(Path(self.data, this.fname)) # p.139  df = tensor
+        print(f'{self.data}')
+        print(f'{this.fname}')
+        return pd.read_csv(Path(self.data, this.fname)) 
 
     @staticmethod
     def create_train(this) -> object:
@@ -170,15 +174,22 @@ userid password                                               name  pclass  gend
         test = this.test 
         train['Age'] = train['Age'].fillna(-0.5)
         test['Age'] = test['Age'].fillna(-0.5)
-         # age 를 평균으로 넣기도 애매하고, 다수결로 넣기도 너무 근거가 없다...
-         # 특히 age 는 생존률 판단에서 가중치(weigth)가 상당하므로 디테일한 접근이 필요합니다.
-         # 나이를 모르는 승객은 모르는 상태로 처리해야 값의 왜곡을 줄일수 있어서 
-         # -0.5 라는 중간값으로 처리했습니다.
-        bins = [-1, 0, 5, 12, 18, 24, 35, 60, np.inf] # 이 파트는 범위를 뜻합니다.
-         # -1 이상 0 미만....60이상 기타 ...
-         # [] 에 있으니 이것은 변수명이겠군요..라고 판단하셨으면 잘 이해한 겁니다.
+        '''
+        It's ambiguous to put an average, and it's too baseless to put a majority.
+        the age is significant in determining survival rates and requires a detailed approach.
+        If you don't know your age, 
+        you have to deal with it without knowing it to reduce the distortion of the price
+        -0.5 is the middle value.
+        '''
+        bins = [-1, 0, 5, 12, 18, 24, 35, 60, np.inf] 
+        '''
+        This part represents a range.
+        -1 and more than 0....60 and more...
+        [] This must be a variable name here.If you think so, you've got it right.
+        '''
+         
         labels = ['Unknown', 'Baby', 'Child', 'Teenager','Student','Young Adult', 'Adult', 'Senior']
-        # [] 은 변수명으로 선언되었음
+        # [] This must be a variable name here.
         train['AgeGroup'] = pd.cut(train['Age'], bins, labels=labels)
         test['AgeGroup'] = pd.cut(train['Age'], bins, labels=labels)
         age_title_mapping = {
@@ -190,7 +201,7 @@ userid password                                               name  pclass  gend
             5: 'Young Adult',
             6: 'Adult',
             7: 'Senior'
-        } # 이렇게 []에서 {} 으로 처리하면 labels 를 값으로 처리하겠네요.
+        } # If you treat it from [] to {} like this, you will treat Labs as a value.
         for x in range(len(train['AgeGroup'])):
             if train['AgeGroup'][x] == 'Unknown':
                 train['AgeGroup'][x] = age_title_mapping[train['Title'][x]]
@@ -230,7 +241,7 @@ userid password                                               name  pclass  gend
 
 
     @staticmethod
-    def fareBand_nominal(this) -> object:  # 요금이 다양하니 클러스터링을 하기위한 준비
+    def fareBand_nominal(this) -> object:  # Rates vary, so prepare for clustering
         this.train = this.train.fillna({'FareBand' : 1})  # FareBand is a non-existent variable added
         this.test = this.test.fillna({'FareBand' : 1})
         return this
@@ -243,7 +254,7 @@ userid password                                               name  pclass  gend
         Many machine learning libraries expect class labels to be encoded as * integer*
         mapping: blue = 0, green = 1, red = 2
         '''
-        this.train['Embarked'] = this.train['Embarked'].map({'S': 1, 'C' : 2, 'Q' : 3}) # ordinal 아닙니다.
+        this.train['Embarked'] = this.train['Embarked'].map({'S': 1, 'C' : 2, 'Q' : 3}) 
         this.test['Embarked'] = this.test['Embarked'].map({'S': 1, 'C' : 2, 'Q' : 3})
         return this
 
@@ -253,7 +264,8 @@ userid password                                               name  pclass  gend
         for dataset in combine:
             dataset['Title'] = dataset.Name.str.extract('([A-Za-z]+)\.', expand=False)
         for dataset in combine:
-            dataset['Title'] = dataset['Title'].replace(['Capt','Col','Don','Dr','Major','Rev','Jonkheer','Dona', 'Mme'], 'Rare')
+            dataset['Title'] = dataset['Title'].replace(['Capt','Col','Don','Dr','Major','Rev',\
+                'Jonkheer','Dona', 'Mme'], 'Rare')
             dataset['Title'] = dataset['Title'].replace(['Countess','Lady','Sir'], 'Royal')
             dataset['Title'] = dataset['Title'].replace('Ms','Miss')
             dataset['Title'] = dataset['Title'].replace('Mlle','Mr')
@@ -274,121 +286,44 @@ userid password                                               name  pclass  gend
 
     def accuracy_by_dtree(self, this):
         dtree = DecisionTreeClassifier()
-        score = cross_val_score(dtree, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(dtree, this.train, this.label, cv=UserService.create_k_fold(),\
+             n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
     def accuracy_by_rforest(self, this):
         rforest = RandomForestClassifier()
-        score = cross_val_score(rforest, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(rforest, this.train, this.label, cv=UserService.create_k_fold(), \
+            n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_nb(self, this):
         nb = GaussianNB()
-        score = cross_val_score(nb, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(nb, this.train, this.label, cv=UserService.create_k_fold(),\
+             n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_knn(self, this):
         knn = KNeighborsClassifier()
-        score = cross_val_score(knn, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(knn, this.train, this.label, cv=UserService.create_k_fold(),\
+             n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
     def accuracy_by_svm(self, this):
         svm = SVC()
-        score = cross_val_score(svm, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(svm, this.train, this.label, cv=UserService.create_k_fold(),\
+             n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
-<<<<<<< HEAD:com_sba_api/user/pro.py
-class Controller:
-    def __init__(self):
-        self.fileReader = FileReader()  
-        self.data = './data'
-        self.service = UserPro()
-        self.odf = None
-
-    def modeling(self, train, test):
-        service = self.service
-        this = self.preprocessing(train, test)
-        this.label = service.create_label(this)
-        this.train = service.create_train(this)
-        print(f'>> Train 변수 : {this.train.columns}')
-        print(f'>> Test 변수 : {this.train.columns}')
-        return this
-
-    def preprocessing(self, train, test):
-        service = self.service
-        this = self.fileReader
-        this.train = service.new_model(train) # payload
-        this.test = service.new_model(test) # payload
-        
-        '''
-        모델 생성
-        '''
-        self.odf = pd.DataFrame(
-
-            {
-             'userid' : this.train.PassengerId,
-             'password' : '1',
-             'name' : this.train.Name
-             }
-        )
-        
-
-        this.id = this.test['PassengerId'] # machine 이에게는 이것이 question 이 됩니다. 
-        print(f'정제 전 Train 변수 : {this.train.columns}')
-        print(f'정제 전 Test 변수 : {this.test.columns}')
-        this = service.drop_feature(this, 'Cabin')
-        this = service.drop_feature(this, 'Ticket')
-        print(f'드롭 후 변수 : {this.train.columns}')
-        this = service.embarked_norminal(this)
-        print(f'승선한 항구 정제결과: {this.train.head()}')
-        this = service.title_norminal(this)
-        print(f'타이틀 정제결과: {this.train.head()}')
-        # name 변수에서 title 을 추출했으니 name 은 필요가 없어졌고, str 이니 
-        # 후에 ML-lib 가 이를 인식하는 과정에서 에러를 발생시킬것이다.
-        this = service.drop_feature(this, 'Name')
-        this = service.drop_feature(this, 'PassengerId')
-        this = service.age_ordinal(this)
-        print(f'Age Processing Result: {this.train.head()}')
-        this = service.drop_feature(this, 'SibSp')
-        this = service.sex_norminal(this)
-        print(f'Sex Processing Result: {this.train.head()}')
-        this = service.fareBand_nominal(this)
-        print(f'Fare Processing Result: {this.train.head()}')
-        this = service.drop_feature(this, 'Fare')
-        print(f'#########  TRAIN Processing Result ###############')
-        print(f'{this.train.head()}')
-        print(f'#########  TEST Processing Result ###############')
-        print(f'{this.test.head()}')
-        print(f'######## train na check ##########')
-        print(f'{this.train.isnull().sum()}')
-        print(f'######## test na check ##########')
-        print(f'{this.test.isnull().sum()}')
-        return this
-        
-
     def learning(self, train, test):
         service = self.service
         this = self.modeling(train, test)
-        print('&&&&&&&&&&&&&&&&& Learning Result  &&&&&&&&&&&&&&&&')
-        print(f'Determination Tree Verification Result : {service.accuracy_by_dtree(this)}')
-        print(f'Random Forest Verification Result: {service.accuracy_by_rforest(this)}')
-        print(f'Naive Bays Verification Result: {service.accuracy_by_nb(this)}')
-        print(f'KNN Verification Reulst: {service.accuracy_by_knn(this)}')
-        print(f'SVM Verification: {service.accuracy_by_svm(this)}')
+        print(f'Dtree verification result: {service.accuracy_by_dtree(this)}')
+        print(f'RForest verification result: {service.accuracy_by_rforest(this)}')
+        print(f'Naive Bayes tree verification result: {service.accuracy_by_nb(this)}')
+        print(f'KNN verification result: {service.accuracy_by_knn(this)}')
+        print(f'SVM verification result: {service.accuracy_by_svm(this)}')
 
-    def submit(self, train, test): # machine 
-=======
-    def learning(self, train, test):
-        service = self.service
-        this = self.modeling(train, test)
-        print(f'결정트리 검증결과: {service.accuracy_by_dtree(this)}')
-        print(f'랜덤포리 검증결과: {service.accuracy_by_rforest(this)}')
-        print(f'나이브베이즈 검증결과: {service.accuracy_by_nb(this)}')
-        print(f'KNN 검증결과: {service.accuracy_by_knn(this)}')
-        print(f'SVM 검증결과: {service.accuracy_by_svm(this)}')
-
-    def submit(self, train, test): # machine 이 된다. 이 단계는 캐글에게 내 머신이를 보내서 평가받게 하는 것 입니다. 마치 수능장에 자식보낸 부모님 마음 ...
->>>>>>> 1811677e1da86682e2c16935665d503d467c0861:com_sba_api/user/service.py
+    def submit(self, train, test): 
         this = self.modeling(train, test)
         clf = RandomForestClassifier()
         clf.fit(this.train, this.label)
@@ -406,26 +341,13 @@ class Controller:
              'rank' : this.train.Title
              }
         )
-<<<<<<< HEAD:com_sba_api/user/pro.py
-        
-=======
       
->>>>>>> 1811677e1da86682e2c16935665d503d467c0861:com_sba_api/user/service.py
         # print(self.odf)
         # print(df)
         sumdf = pd.concat([self.odf, df], axis=1)
         print(sumdf)
         return sumdf
-<<<<<<< HEAD:com_sba_api/user/pro.py
-
-
-
-if __name__ == '__main__':
-    ctrl = Controller()
-    ctrl.submit('train.csv','test.csv')
-=======
 '''
 service = UserService()
 service.hook()
 '''
->>>>>>> 1811677e1da86682e2c16935665d503d467c0861:com_sba_api/user/service.py
