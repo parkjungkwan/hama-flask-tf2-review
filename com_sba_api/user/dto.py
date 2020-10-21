@@ -79,7 +79,7 @@ class UserDto(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-
+'''
 service = UserService()
 Session = sessionmaker(bind=engine)
 s = Session()
@@ -88,3 +88,4 @@ print(df.head())
 s.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
 s.commit()
 s.close()
+'''

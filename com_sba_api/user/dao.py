@@ -7,10 +7,8 @@ pip install sqlalchemy-easy-profile
 '''
 class UserDao(object):
     def __init__(self):
-        global engine
-        Session.configure(bind=engine, autoflush=False, expire_on_commit=False)
-        Base.metadata.drop_all(engine)
-        Base.metadata.create_all(engine)
+        engine = create_engine("postgres+psycopg2://postgres:pass@localhost/mydb")
+        session = Session(bind=engine)
 
         
         
@@ -28,6 +26,14 @@ class UserDao(object):
         return cls.query.filter_by(userid == userid).first()
 
     
+    def add_user():
+        my_data = Data(name, email, phone)
+        db.session.add(my_data)
+        db.session.commit()
+ 
+        flash("Employee Inserted Successfully")
+    
+    
     def insert_many(cls, table, n = 10000):
         print('-- 2 --')
         service = UserService()
@@ -41,6 +47,18 @@ class UserDao(object):
         Session.commit()
         print("SQLAlchemy ORM bulk_insert_mappings(): Total time for " + str(n) +
             " records " + str(time.time() - t0) + " secs")
+
+    def modify_user():
+        my_data = {}
+        
+        db.session.commit()
+        flash("Employee Updated Successfully")
+
+    def delete_user():
+        my_data = Data.query.get(id)
+        db.session.delete(my_data)
+        db.session.commit()
+        flash("Employee Deleted Successfully")
         
     
 
