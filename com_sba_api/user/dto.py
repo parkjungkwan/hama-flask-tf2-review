@@ -1,29 +1,74 @@
 from com_sba_api.ext.db import db
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import create_engine
+from com_sba_api.user.service import UserService
+config = {
+    'user' : 'root',
+    'password' : 'root',
+    'host': '127.0.0.1',
+    'port' : '3306',
+    'database' : 'root'
+}
+charset = {'utf8':'utf8'}
+url = f"mysql+mysqlconnector://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}?charset=utf8"
+engine = create_engine(url)
+'''
+userid password                                               name  pclass  gender age_group  embarked  rank
+0         1        1                            Braund, Mr. Owen Harris       3       0         4         1     1
+1         2        1  Cumings, Mrs. John Bradley (Florence Briggs Th...       1       1         6         2     3
+2         3        1                             Heikkinen, Miss. Laina       3       1         5         1     2
+3         4        1       Futrelle, Mrs. Jacques Heath (Lily May Peel)       1       1         5         1     3
+4         5        1                           Allen, Mr. William Henry       3       0         5         1     1
+..      ...      ...                                                ...     ...     ...       ...       ...   ...
+886     887        1                              Montvila, Rev. Juozas       2       0         5         1     6
+887     888        1                       Graham, Miss. Margaret Edith       1       1         4         1     2
+888     889        1           Johnston, Miss. Catherine Helen "Carrie"       3       1         2         1     2
+889     890        1                              Behr, Mr. Karl Howell       1       0         5         2     1
+890     891        1                                Dooley, Mr. Patrick       3       0         5         3     1
 
+[891 rows x 8 columns]
+
+'''
 class UserDto(db.Model):
 
     __tablename__ = 'users'
     __table_args__={'mysql_collate':'utf8_general_ci'}
 
-    userid: str = db.Column(db.String(30), primary_key = True, index = True)
-    password: str = db.Column(db.String(30))
-    name: str = db.Column(db.String(30))
+    userid: str = db.Column(db.String(10), primary_key = True, index = True)
+    password: str = db.Column(db.String(1))
+    name: str = db.Column(db.String(100))
+    pclass: int = db.Column(db.Integer)
+    gender: int = db.Column(db.Integer)
+    age_group: int = db.Column(db.Integer)
+    embarked: int = db.Column(db.Integer)
+    rank: int = db.Column(db.Integer)
 
-    def __init__(self, userid, password, name):
+    def __init__(self, userid, password, name, pclass, gender, age_group, embarked, rank):
         self.userid = userid
         self.password = password
         self.name = name
+        self.pclass = pclass
+        self.gender = gender
+        self.age_group = age_group
+        self.embarked = embarked
+        self.rank = rank
 
     def __repr__(self):
         return f'User(id={self.id},userid={self.userid},\
-            password={self.password},name={self.name})'
+            password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
+                age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
 
     @property
     def json(self):
         return {
             'userid' : self.userid,
             'password' : self.password,
-            'name' : self.name
+            'name' : self.name,
+            'pclass' : self.pclass,
+            'gender' : self.gender,
+            'age_group' : self.age_group,
+            'embarked' : self.embarked,
+            'rank' : self.rank
         }
 
     def save(self):
@@ -34,5 +79,13 @@ class UserDto(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-
-
+'''
+service = UserService()
+Session = sessionmaker(bind=engine)
+s = Session()
+df = service.hook()
+print(df.head())
+s.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
+s.commit()
+s.close()
+'''
