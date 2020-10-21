@@ -1,12 +1,8 @@
 import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from util.file_handler import FileReader
+from com_sba_api.utils.file_helper import FileReader
 import pandas as pd
 import numpy as np
-from config import basedir
-# sklearn algorithm : classification, regression, clustring, reduction
 from sklearn.ensemble import RandomForestClassifier # rforest
 from sklearn.tree import DecisionTreeClassifier # dtree
 from sklearn.ensemble import RandomForestClassifier # rforest
@@ -14,52 +10,143 @@ from sklearn.naive_bayes import GaussianNB # nb
 from sklearn.neighbors import KNeighborsClassifier # knn
 from sklearn.svm import SVC # svm
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import KFold  # k값은 count 로 의미로 이해
+from sklearn.model_selection import KFold  # k value is understood as count
 from sklearn.model_selection import cross_val_score
 
+from pathlib import Path
 # dtree, rforest, nb, knn, svm,  
-
 
 """
 context: /Users/bitcamp/SbaProjects
 fname: 
-PassengerId  고객ID,
-Survived 생존여부,  --> 머신러닝 모델이 맞춰야 할 답 
-Pclass 승선권 1 = 1등석, 2 = 2등석, 3 = 3등석,
+PassengerId
+Survived: The answer that a machine learning model should match 
+Pclass: Boarding Pass 1 = 1st-class seat, 2 = 2nd, 3 = 3rd,
 Name,
 Sex,
 Age,
-SibSp 동반한 형제, 자매, 배우자,
-Parch 동반한 부모, 자식,
-Ticket 티켓번호,
-Fare 요금,
-Cabin 객실번호,
-Embarked 승선한 항구명 C = 쉐브루, Q = 퀸즈타운, S = 사우스햄튼
+SibSp accompanying brothers, sisters, spouses
+Parch accompanying parents, children,
+Ticket : Ticket Number
+Fare : Boarding Charges
+Cabin : Room number
+Embarked : a Port Name on Board C = Cherbourg, Q = Queenstown, S = Southhampton
 """
-class Service:
+
+
+class UserService:
     def __init__(self):
         self.fileReader = FileReader()  
-        self.kaggle = os.path.join(basedir, 'kaggle')
-        self.data = os.path.join(self.kaggle, 'data')
+        self.data = os.path.abspath("com_sba_api/user/data")
+        self.odf = None
+
+    def hook(self):
+        train = 'train.csv'
+        test = 'test.csv'
+        this = self.fileReader
+        this.train = self.new_model(train) # payload
+        this.test = self.new_model(test) # payload
+        
+        '''
+        Original Model Generation
+        '''
+        self.odf = pd.DataFrame(
+
+            {
+             'userid' : this.train.PassengerId,
+             'password' : '1',
+             'name' : this.train.Name
+             }
+        )
+        
+        this.id = this.test['PassengerId'] # This becomes a question. 
+        # print(f'Preprocessing Train Variable : {this.train.columns}')
+        # print(f'Preprocessing Test Variable : {this.test.columns}')
+        this = self.drop_feature(this, 'Cabin')
+        this = self.drop_feature(this, 'Ticket')
+        # print(f'Post-Drop Variable : {this.train.columns}')
+        this = self.embarked_norminal(this)
+        # print(f'Preprocessing Embarked Variable: {this.train.head()}')
+        this = self.title_norminal(this)
+        # print(f'Preprocessing Title Variable: {this.train.head()}')
+        # name 변수에서 title 을 추출했으니 name 은 필요가 없어졌고, str 이니 
+        # 후에 ML-lib 가 이를 인식하는 과정에서 에러를 발생시킬것이다.
+        this = self.drop_feature(this, 'Name')
+        this = self.drop_feature(this, 'PassengerId')
+        this = self.age_ordinal(this)
+        # print(f'Preprocessing Age Variable: {this.train.head()}')
+        this = self.drop_feature(this, 'SibSp')
+        this = self.sex_norminal(this)
+        # print(f'Preprocessing Sex Variable: {this.train.head()}')
+        this = self.fareBand_nominal(this)
+        # print(f'Preprocessing Fare Variable: {this.train.head()}')
+        this = self.drop_feature(this, 'Fare')
+        # print(f'Preprocessing Train Result: {this.train.head()}')
+        # print(f'Preprocessing Test Result: {this.test.head()}')
+        # print(f'Train NA Check: {this.train.isnull().sum()}')
+        # print(f'Test NA Check: {this.test.isnull().sum()}')
+        this.label = self.create_label(this) # payload
+        this.train = self.create_train(this) # payload
+        # print(f'Train Variable : {this.train.columns}')
+        # print(f'Test Variable : {this.train.columns}')
+        clf = RandomForestClassifier()
+        clf.fit(this.train, this.label)
+        prediction = clf.predict(this.test)
+        
+        # print(this)
+        df = pd.DataFrame(
+
+            {
+             'pclass': this.train.Pclass,
+             'gender': this.train.Sex, 
+             'age_group': this.train.AgeGroup,
+             'embarked' : this.train.Embarked,
+             'rank' : this.train.Title
+             }
+        )
+     
+        # print(self.odf)
+        # print(df)
+        sumdf = pd.concat([self.odf, df], axis=1)
+        
+        '''
+userid password                                               name  pclass  gender age_group  embarked  rank
+0         1        1                            Braund, Mr. Owen Harris       3       0         4         1     1
+1         2        1  Cumings, Mrs. John Bradley (Florence Briggs Th...       1       1         6         2     3
+2         3        1                             Heikkinen, Miss. Laina       3       1         5         1     2
+3         4        1       Futrelle, Mrs. Jacques Heath (Lily May Peel)       1       1         5         1     3
+4         5        1                           Allen, Mr. William Henry       3       0         5         1     1
+..      ...      ...                                                ...     ...     ...       ...       ...   ...
+886     887        1                              Montvila, Rev. Juozas       2       0         5         1     6
+887     888        1                       Graham, Miss. Margaret Edith       1       1         4         1     2
+888     889        1           Johnston, Miss. Catherine Helen "Carrie"       3       1         2         1     2
+889     890        1                              Behr, Mr. Karl Howell       1       0         5         2     1
+890     891        1                                Dooley, Mr. Patrick       3       0         5         3     1
+
+[891 rows x 8 columns]
+        
+        '''
+        return sumdf
+        
     
     def new_model(self, payload) -> object:
         this = self.fileReader
         this.data = self.data
         this.fname = payload
-        return pd.read_csv(os.path.join(self.data, this.fname)) # p.139  df = tensor
+        return pd.read_csv(Path(self.data, this.fname)) # p.139  df = tensor
 
     @staticmethod
     def create_train(this) -> object:
-        return this.train.drop('Survived', axis=1) # train 은 답이 제거된 데이터셋이다. 
+        return this.train.drop('Survived', axis=1) # Train is a dataset in which the answer is removed. 
 
     @staticmethod
     def create_label(this) -> object:
-        return this.train['Survived'] # label 은 곧 답이 된다.
+        return this.train['Survived'] # Label is the answer.
 
     @staticmethod
     def drop_feature(this, feature) -> object:
         this.train = this.train.drop([feature], axis = 1)
-        this.test = this.test.drop([feature], axis = 1) # p.149 에 보면 훈련, 테스트 세트로 나눈다
+        this.test = this.test.drop([feature], axis = 1) 
         return this
 
 
@@ -69,7 +156,7 @@ class Service:
 
     @staticmethod
     def sex_norminal(this) -> object:
-        combine = [this.train, this.test] # train과 test 가 묶입니다. 
+        combine = [this.train, this.test] # Train and test are bound.
         sex_mapping = {'male':0, 'female':1}
         for dataset in combine:
             dataset['Sex'] = dataset['Sex'].map(sex_mapping)
@@ -144,16 +231,18 @@ class Service:
 
     @staticmethod
     def fareBand_nominal(this) -> object:  # 요금이 다양하니 클러스터링을 하기위한 준비
-        this.train = this.train.fillna({'FareBand' : 1})  # FareBand 는 없는 변수인데 추가함
+        this.train = this.train.fillna({'FareBand' : 1})  # FareBand is a non-existent variable added
         this.test = this.test.fillna({'FareBand' : 1})
         return this
 
     @staticmethod
     def embarked_norminal(this) -> object:
-        this.train = this.train.fillna({'Embarked': 'S'}) # S가 가장 많아서 빈곳에 채움
-        this.test = this.test.fillna({'Embarked': 'S'}) # 교과서 144
-        # 많은 머신러닝 라이브러리는 클래스 레이블이 *정수* 로 인코딩 되었다고 기대함
-        # 교과서 146 문자 blue = 0, green = 1, red = 2 로 치환 -> mapping 합니다.
+        this.train = this.train.fillna({'Embarked': 'S'}) # S is the most common, filling in empty spaces.
+        this.test = this.test.fillna({'Embarked': 'S'}) 
+        '''
+        Many machine learning libraries expect class labels to be encoded as * integer*
+        mapping: blue = 0, green = 1, red = 2
+        '''
         this.train['Embarked'] = this.train['Embarked'].map({'S': 1, 'C' : 2, 'Q' : 3}) # ordinal 아닙니다.
         this.test['Embarked'] = this.test['Embarked'].map({'S': 1, 'C' : 2, 'Q' : 3})
         return this
@@ -176,7 +265,7 @@ class Service:
         this.test = this.test
         return this
 
-    # Learning Algorithm 중에서 dtree, rforest, nb, knn, svm 이것을 대표로 사용하겠습니다.
+    # Dtree, rforest, nb, nnn, svm among Learning Algorithms use this as a representative
 
     @staticmethod
     def create_k_fold():
@@ -185,87 +274,32 @@ class Service:
 
     def accuracy_by_dtree(self, this):
         dtree = DecisionTreeClassifier()
-        score = cross_val_score(dtree, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(dtree, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
     def accuracy_by_rforest(self, this):
         rforest = RandomForestClassifier()
-        score = cross_val_score(rforest, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(rforest, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_nb(self, this):
         nb = GaussianNB()
-        score = cross_val_score(nb, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(nb, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_knn(self, this):
         knn = KNeighborsClassifier()
-        score = cross_val_score(knn, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(knn, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
     def accuracy_by_svm(self, this):
         svm = SVC()
-        score = cross_val_score(svm, this.train, this.label, cv=Service.create_k_fold(), n_jobs=1, scoring='accuracy')
+        score = cross_val_score(svm, this.train, this.label, cv=UserService.create_k_fold(), n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
-
-class Controller:
-    def __init__(self):
-        self.fileReader = FileReader()  
-        self.kaggle = os.path.join(basedir, 'kaggle')
-        self.data = os.path.join(self.kaggle, 'data')
-        self.service = Service()
-
-    def modeling(self, train, test):
-        service = self.service
-        this = self.preprocessing(train, test)
-        this.label = service.create_label(this)
-        this.train = service.create_train(this)
-        print(f'>> Train 변수 : {this.train.columns}')
-        print(f'>> Test 변수 : {this.train.columns}')
-        return this
-
-    def preprocessing(self, train, test):
-        service = self.service
-        this = self.fileReader
-        this.train = service.new_model(train) # payload
-        this.test = service.new_model(test) # payload
-        this.id = this.test['PassengerId'] # machine 이에게는 이것이 question 이 됩니다. 
-        print(f'정제 전 Train 변수 : {this.train.columns}')
-        print(f'정제 전 Test 변수 : {this.test.columns}')
-        this = service.drop_feature(this, 'Cabin')
-        this = service.drop_feature(this, 'Ticket')
-        print(f'드롭 후 변수 : {this.train.columns}')
-        this = service.embarked_norminal(this)
-        print(f'승선한 항구 정제결과: {this.train.head()}')
-        this = service.title_norminal(this)
-        print(f'타이틀 정제결과: {this.train.head()}')
-        # name 변수에서 title 을 추출했으니 name 은 필요가 없어졌고, str 이니 
-        # 후에 ML-lib 가 이를 인식하는 과정에서 에러를 발생시킬것이다.
-        this = service.drop_feature(this, 'Name')
-        this = service.drop_feature(this, 'PassengerId')
-        this = service.age_ordinal(this)
-        print(f'나이 정제결과: {this.train.head()}')
-        this = service.drop_feature(this, 'SibSp')
-        this = service.sex_norminal(this)
-        print(f'성별 정제결과: {this.train.head()}')
-        this = service.fareBand_nominal(this)
-        print(f'요금 정제결과: {this.train.head()}')
-        this = service.drop_feature(this, 'Fare')
-        print(f'#########  TRAIN 정제결과 ###############')
-        print(f'{this.train.head()}')
-        print(f'#########  TEST 정제결과 ###############')
-        print(f'{this.test.head()}')
-        print(f'######## train na 체크 ##########')
-        print(f'{this.train.isnull().sum()}')
-        print(f'######## test na 체크 ##########')
-        print(f'{this.test.isnull().sum()}')
-        return this
-        
 
     def learning(self, train, test):
         service = self.service
         this = self.modeling(train, test)
-        print('&&&&&&&&&&&&&&&&& Learning 결과  &&&&&&&&&&&&&&&&')
         print(f'결정트리 검증결과: {service.accuracy_by_dtree(this)}')
         print(f'랜덤포리 검증결과: {service.accuracy_by_rforest(this)}')
         print(f'나이브베이즈 검증결과: {service.accuracy_by_nb(this)}')
@@ -277,14 +311,26 @@ class Controller:
         clf = RandomForestClassifier()
         clf.fit(this.train, this.label)
         prediction = clf.predict(this.test)
-        pd.DataFrame(
-            {'PassengerId' : this.id, 'Survived' : prediction}
-        ).to_csv(os.path.join(self.data, 'submission.csv'), index=False)
+        
+        print(this)
+        # Pclass  Sex   Age  Parch  Embarked  Title AgeGroup
+        df = pd.DataFrame(
 
-
-
-if __name__ == '__main__':
-    print(f'********* {basedir} *********')
-    ctrl = Controller()
-    ctrl.submit('train.csv','test.csv')
-    
+            {
+             'pclass': this.train.Pclass,
+             'gender': this.train.Sex, 
+             'age_group': this.train.AgeGroup,
+             'embarked' : this.train.Embarked,
+             'rank' : this.train.Title
+             }
+        )
+      
+        # print(self.odf)
+        # print(df)
+        sumdf = pd.concat([self.odf, df], axis=1)
+        print(sumdf)
+        return sumdf
+'''
+service = UserService()
+service.hook()
+'''

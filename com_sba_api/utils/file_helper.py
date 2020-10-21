@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+
 import os
 import pandas as pd
 import xlrd
@@ -10,7 +10,7 @@ ImportError: Missing optional dependency 'xlrd'.
 pip install xlrd 주의!! anaconda install xlrd 하면 에러 발생
 TEST
 '''
-
+from dataclasses import dataclass
 @dataclass
 class FileReader:
     # def __init__(self, context, fname, train, test, id, label):
