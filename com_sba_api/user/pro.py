@@ -1,6 +1,6 @@
 import os
 
-from com_sba_api.utils.file_helper import FileReader
+from com_sba_api.util.file_handler import FileReader
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier # rforest
@@ -254,20 +254,20 @@ class Controller:
         this = service.drop_feature(this, 'Name')
         this = service.drop_feature(this, 'PassengerId')
         this = service.age_ordinal(this)
-        print(f'나이 정제결과: {this.train.head()}')
+        print(f'Age Processing Result: {this.train.head()}')
         this = service.drop_feature(this, 'SibSp')
         this = service.sex_norminal(this)
-        print(f'성별 정제결과: {this.train.head()}')
+        print(f'Sex Processing Result: {this.train.head()}')
         this = service.fareBand_nominal(this)
-        print(f'요금 정제결과: {this.train.head()}')
+        print(f'Fare Processing Result: {this.train.head()}')
         this = service.drop_feature(this, 'Fare')
-        print(f'#########  TRAIN 정제결과 ###############')
+        print(f'#########  TRAIN Processing Result ###############')
         print(f'{this.train.head()}')
-        print(f'#########  TEST 정제결과 ###############')
+        print(f'#########  TEST Processing Result ###############')
         print(f'{this.test.head()}')
-        print(f'######## train na 체크 ##########')
+        print(f'######## train na check ##########')
         print(f'{this.train.isnull().sum()}')
-        print(f'######## test na 체크 ##########')
+        print(f'######## test na check ##########')
         print(f'{this.test.isnull().sum()}')
         return this
         
@@ -275,14 +275,14 @@ class Controller:
     def learning(self, train, test):
         service = self.service
         this = self.modeling(train, test)
-        print('&&&&&&&&&&&&&&&&& Learning 결과  &&&&&&&&&&&&&&&&')
-        print(f'결정트리 검증결과: {service.accuracy_by_dtree(this)}')
-        print(f'랜덤포리 검증결과: {service.accuracy_by_rforest(this)}')
-        print(f'나이브베이즈 검증결과: {service.accuracy_by_nb(this)}')
-        print(f'KNN 검증결과: {service.accuracy_by_knn(this)}')
-        print(f'SVM 검증결과: {service.accuracy_by_svm(this)}')
+        print('&&&&&&&&&&&&&&&&& Learning Result  &&&&&&&&&&&&&&&&')
+        print(f'Determination Tree Verification Result : {service.accuracy_by_dtree(this)}')
+        print(f'Random Forest Verification Result: {service.accuracy_by_rforest(this)}')
+        print(f'Naive Bays Verification Result: {service.accuracy_by_nb(this)}')
+        print(f'KNN Verification Reulst: {service.accuracy_by_knn(this)}')
+        print(f'SVM Verification: {service.accuracy_by_svm(this)}')
 
-    def submit(self, train, test): # machine 이 된다. 이 단계는 캐글에게 내 머신이를 보내서 평가받게 하는 것 입니다. 마치 수능장에 자식보낸 부모님 마음 ...
+    def submit(self, train, test): # machine 
         this = self.modeling(train, test)
         clf = RandomForestClassifier()
         clf.fit(this.train, this.label)
@@ -300,14 +300,12 @@ class Controller:
              'rank' : this.train.Title
              }
         )
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        
         # print(self.odf)
         # print(df)
         sumdf = pd.concat([self.odf, df], axis=1)
         print(sumdf)
+        return sumdf
 
 
 
