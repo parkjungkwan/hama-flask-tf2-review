@@ -12,6 +12,7 @@ app = Flask(__name__)
 CORS(app)
 app.register_blueprint(user)
 
+
 print(url)
 app.config['SQLALCHEMY_DATABASE_URI'] = url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

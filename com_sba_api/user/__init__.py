@@ -4,10 +4,13 @@ from flask_restful import Api
 from com_sba_api.user.api import User
 
 user = Blueprint('user', __name__, url_prefix='/api/user')
+users = Blueprint('users', __name__, url_prefix='/api/users')
+auth = Blueprint('auth', __name__, url_prefix='/api/auth')
+access = Blueprint('access', __name__, url_prefix='/api/access')
 api = Api(user)
-
-api.add_resource(User, '/api/user/<user_key>')
-
+api = Api(users)
+api = Api(auth)
+api = Api(access)
 
 @user.errorhandler(500)
 def server_error(e):

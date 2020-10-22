@@ -1,50 +1,89 @@
 from typing import List
+from flask import request
 from flask_restful import Resource, reqparse
 from com_sba_api.user.dao import UserDao
+from com_sba_api.user.dto import UserDto, UserVo
+import json
+from flask import jsonify
+
+parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
+parser.add_argument('userid', type=str, required=True,
+                                        help='This field should be a userid')
+parser.add_argument('password', type=str, required=True,
+                                        help='This field should be a password')
 
 class User(Resource):
-    def __init__(self):
-        self.parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
-    
-    def post(self):
-        args = self.parser.parse_args()
+    @staticmethod
+    def post():
+        args = parser.parse_args()
         print(f'User {args["id"]} added ')
+        params = json.loads(request.get_data(), encoding='utf-8')
+        if len(params) == 0:
+
+            return 'No parameter'
+
+        params_str = ''
+        for key in params.keys():
+            params_str += 'key: {}, value: {}<br>'.format(key, params[key])
         return {'code':0, 'message': 'SUCCESS'}, 200
-
-    def update(self, id):
-        args = self.parser.parse_args()
-        print(f'User {args["id"]} updated ')
-        return {'code':0, 'message': 'SUCCESS'}, 200
-
-    def delete(self, id):
-        args = self.parser.parse_args()
-        print(f'USer {args["id"]} deleted')
-        return {'code' : 0, 'message' : 'SUCCESS'}, 200
-
-    def get(self, id):
-        self.parser.add_argument('id', type=int, required=True,
-                                        help='This field should be a Number')
+    @staticmethod
+    def get(id):
+        print(f'User {id} added ')
         try:
             user = UserDao.find_by_id(id)
             if user:
                 return user.json()
         except Exception as e:
             return {'message': 'User not found'}, 404
-    
-    
 
-class Users(Resource):
-    def __init__(self):
-        print('-- 0 --')
-        parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
+    @staticmethod
+    def update():
+        args = parser.parse_args()
+        print(f'User {args["id"]} updated ')
+        return {'code':0, 'message': 'SUCCESS'}, 200
+
+    @staticmethod
+    def delete():
+        args = parser.parse_args()
+        print(f'USer {args["id"]} deleted')
+        return {'code' : 0, 'message' : 'SUCCESS'}, 200
+
     
-    @classmethod
-    def get():
-        ...
+    
+class Users(Resource):
     
     def post(self):
         ud = UserDao()
         ud.insert_many('users')
+
+    def get():
+        ...
+
+class Auth(Resource):
+
+    def post(self):
+        body = request.get_json()
+        user = UserDto(**body)
+        UserDao.save(user)
+        id = user.userid
+        
+        return {'id': str(id)}, 200 
+
+
+class Access(Resource):
+    def post(self):
+        args = parser.parse_args()
+        user = UserVo()
+        user.userid = args.userid
+        user.password = args.password
+        print(user.userid)
+        print(user.password)
+        data = UserDao.login(user)
+        id = data.userid
+        print(f'>>>>>>>> {id}')
+        return json.dumps({'userid': data.userid,
+        'name': data.name
+        }), 200
 
 
 

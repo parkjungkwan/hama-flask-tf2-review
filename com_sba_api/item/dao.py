@@ -1,6 +1,6 @@
-from com_sba_api.ext.db import db
+from com_sba_api.item.dto import ItemDto
 
-class ItemDao():
+class ItemDao(ItemDto):
     
     @classmethod
     def find_all(cls):

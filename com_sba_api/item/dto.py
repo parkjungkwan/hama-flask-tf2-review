@@ -8,7 +8,7 @@ class ItemDto(db.Model):
     name : str = db.Column(db.String(30))
     price : str = db.Column(db.String(30))
 
-    articles = db.relationship('ArticleModel', lazy='dynamic')
+    articles = db.relationship('ArticleDto', lazy='dynamic')
 
     def __init__(self, id, name, price):
         self.id = id

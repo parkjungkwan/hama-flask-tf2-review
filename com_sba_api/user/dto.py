@@ -58,3 +58,12 @@ class UserDto(db.Model):
         }
 
     
+class UserVo:
+    userid: str = ''
+    password: str = ''
+    name: str = ''
+    pclass: int = 0
+    gender: int = 0
+    age_group: int = 0
+    embarked: int = 0
+    rank: int =  0
