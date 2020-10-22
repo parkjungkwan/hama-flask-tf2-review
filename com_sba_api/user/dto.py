@@ -56,3 +56,5 @@ class UserDto(db.Model):
             'embarked' : self.embarked,
             'rank' : self.rank
         }
+
+    

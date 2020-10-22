@@ -52,3 +52,5 @@ class UserDao(object):
 u = UserDao()
 u.insert_many()
 '''
+    
+
