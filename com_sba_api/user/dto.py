@@ -67,3 +67,6 @@ class UserVo:
     age_group: int = 0
     embarked: int = 0
     rank: int =  0
+
+
+

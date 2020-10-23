@@ -8,7 +8,9 @@ class UserDao(UserDto):
 
     @classmethod
     def find_all(cls):
-        return cls.query.all()
+        sql = cls.query
+        df = pd.read_sql(sql.statement, sql.session.bind)
+        return json.loads(df.to_json(orient='records'))
 
     @classmethod
     def find_by_name(cls, name):

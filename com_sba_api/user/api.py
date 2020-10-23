@@ -56,8 +56,10 @@ class Users(Resource):
         ud = UserDao()
         ud.insert_many('users')
 
-    def get():
-        ...
+    def get(self):
+        print('========== 10 ==========')
+        data = UserDao.find_all()
+        return data, 200
 
 class Auth(Resource):
 
