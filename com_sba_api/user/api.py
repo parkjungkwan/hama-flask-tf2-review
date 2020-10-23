@@ -79,11 +79,7 @@ class Access(Resource):
         print(user.userid)
         print(user.password)
         data = UserDao.login(user)
-        id = data.userid
-        print(f'>>>>>>>> {id}')
-        return json.dumps({'userid': data.userid,
-        'name': data.name
-        }), 200
+        return data[0], 200
 
 
 

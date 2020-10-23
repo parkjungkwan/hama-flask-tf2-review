@@ -1,7 +1,8 @@
 from com_sba_api.ext.db import db, openSession
 from com_sba_api.user.service import UserService
 from com_sba_api.user.dto import UserDto
-
+import pandas as pd
+import json
 
 class UserDao(UserDto):
 
@@ -19,10 +20,14 @@ class UserDao(UserDto):
 
     @classmethod
     def login(cls, user):
-        return cls.query\
-            .filter(cls.userid == user.userid)\
-            .filter(cls.password == user.password)\
-            .first()
+        sql = cls.query\
+            .filter(cls.userid.like(user.userid))\
+            .filter(cls.password.like(user.password))
+        df = pd.read_sql(sql.statement, sql.session.bind)
+        print('==================================')
+        print(json.loads(df.to_json(orient='records')))
+        return json.loads(df.to_json(orient='records'))
+            
 
     @staticmethod
     def save(user):
