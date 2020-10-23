@@ -71,7 +71,10 @@ class Auth(Resource):
 
 
 class Access(Resource):
+    def __init__(self):
+        print('========== 5 ==========')
     def post(self):
+        print('========== 6 ==========')
         args = parser.parse_args()
         user = UserVo()
         user.userid = args.userid

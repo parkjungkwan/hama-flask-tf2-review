@@ -7,7 +7,7 @@ from com_sba_api.article.api import Article, Articles
 from com_sba_api.user import user
 from flask_cors import CORS
 
-print('========== url ==========')
+print('========== 1 ==========')
 app = Flask(__name__)
 CORS(app)
 app.register_blueprint(user)
