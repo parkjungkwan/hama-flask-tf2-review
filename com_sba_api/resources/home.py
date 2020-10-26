@@ -13,3 +13,10 @@ api.add_resource(Home, '/api')
 def server_error(e):
     logging.exception('An error occurred during home request. %s' % str(e))
     return 'An internal error occurred.', 500
+
+from flask_restful import Resource
+
+class Home(Resource):
+    @staticmethod
+    def get():
+        return {'message': 'Server Start'}
