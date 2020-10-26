@@ -1,4 +1,7 @@
+from flask_restful import Resource, reqparse
 from com_sba_api.ext.db import db
+from com_sba_api.resources.user import UserDto
+from com_sba_api.resources.item import ItemDto
 
 class ArticleDto(db.Model):
     __tablename__ = "articles"
@@ -39,7 +42,7 @@ class ArticleDto(db.Model):
         db.session.delete(self)
         db.session.commit()
 
-class ArticleDao():
+class ArticleDao(ArticleDto):
     
     @classmethod
     def find_all(cls):
@@ -53,12 +56,16 @@ class ArticleDao():
     def find_by_id(cls, id):
         return cls.query.filter_by(id == id).first()
 
+    @classmethod
+    def write_aritcle(cls):
+        ...
+
 class Article(Resource):
     def __init__(self):
         parser = reqparse.RequestParser()
         parser.add_argument('id', type=int, required=False, help='This field cannot be left blank')
-        parser.add_argument('user_id', type=int, required=False, help='This field cannot be left blank')
-        parser.add_argument('item_id', type=int, required=False, help='This field cannot be left blank')
+        parser.add_argument('userid', type=int, required=False, help='This field cannot be left blank')
+        parser.add_argument('itemid', type=int, required=False, help='This field cannot be left blank')
         parser.add_argument('title', type=str, required=False, help='This field cannot be left blank')
         parser.add_argument('content', type=str, required=False, help='This field cannot be left blank')
 
@@ -66,6 +73,12 @@ class Article(Resource):
     def post(self):
         data = self.parset.parse_args()
         article = ArticleDto(data['title'], data['content'], data['user_id'], data['item_id'])
+        print('******************')
+        print('******************')
+        print('******************')
+        print('******************')
+        print('******************')
+        print(f'{data}')
         try: 
             article.save()
         except:

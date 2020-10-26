@@ -1,6 +1,13 @@
+from typing import List
+from flask import request
+from flask_restful import Resource, reqparse
+import json
+from flask import jsonify
+from com_sba_api.ext.db import db, openSession
+import pandas as pd
+import json
 import os
-
-from com_sba_api.util.file_handler import FileReader
+from com_sba_api.util.file import FileReader
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier # rforest
@@ -14,7 +21,138 @@ from sklearn.model_selection import KFold  # k value is understood as count
 from sklearn.model_selection import cross_val_score
 
 from pathlib import Path
-# dtree, rforest, nb, knn, svm,  
+'''
+userid password                                               name  pclass  gender age_group  embarked  rank
+0         1        1                            Braund, Mr. Owen Harris       3       0         4         1     1
+1         2        1  Cumings, Mrs. John Bradley (Florence Briggs Th...       1       1         6         2     3
+2         3        1                             Heikkinen, Miss. Laina       3       1         5         1     2
+3         4        1       Futrelle, Mrs. Jacques Heath (Lily May Peel)       1       1         5         1     3
+4         5        1                           Allen, Mr. William Henry       3       0         5         1     1
+..      ...      ...                                                ...     ...     ...       ...       ...   ...
+886     887        1                              Montvila, Rev. Juozas       2       0         5         1     6
+887     888        1                       Graham, Miss. Margaret Edith       1       1         4         1     2
+888     889        1           Johnston, Miss. Catherine Helen "Carrie"       3       1         2         1     2
+889     890        1                              Behr, Mr. Karl Howell       1       0         5         2     1
+890     891        1                                Dooley, Mr. Patrick       3       0         5         3     1
+[891 rows x 8 columns]
+'''
+class UserDto(db.Model):
+
+    __tablename__ = 'users'
+    __table_args__={'mysql_collate':'utf8_general_ci'}
+
+    userid: str = db.Column(db.String(10), primary_key = True, index = True)
+    password: str = db.Column(db.String(1))
+    name: str = db.Column(db.String(100))
+    pclass: int = db.Column(db.Integer)
+    gender: int = db.Column(db.Integer)
+    age_group: int = db.Column(db.Integer)
+    embarked: int = db.Column(db.Integer)
+    rank: int = db.Column(db.Integer)
+
+    def __init__(self, userid, password, name, pclass, gender, age_group, embarked, rank):
+        self.userid = userid
+        self.password = password
+        self.name = name
+        self.pclass = pclass
+        self.gender = gender
+        self.age_group = age_group
+        self.embarked = embarked
+        self.rank = rank
+
+    def __repr__(self):
+        return f'User(id={self.id},userid={self.userid},\
+            password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
+                age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
+
+    @property
+    def json(self):
+        return {
+            'userid' : self.userid,
+            'password' : self.password,
+            'name' : self.name,
+            'pclass' : self.pclass,
+            'gender' : self.gender,
+            'age_group' : self.age_group,
+            'embarked' : self.embarked,
+            'rank' : self.rank
+        }
+
+    
+class UserVo:
+    userid: str = ''
+    password: str = ''
+    name: str = ''
+    pclass: int = 0
+    gender: int = 0
+    age_group: int = 0
+    embarked: int = 0
+    rank: int =  0
+
+
+
+class UserDao(UserDto):
+
+    @classmethod
+    def find_all(cls):
+        sql = cls.query
+        df = pd.read_sql(sql.statement, sql.session.bind)
+        return json.loads(df.to_json(orient='records'))
+
+    @classmethod
+    def find_by_name(cls, name):
+        return cls.query.filer_by(name == name).all()
+
+    @classmethod
+    def find_by_id(cls, userid):
+        return cls.query.filter_by(userid == userid).first()
+
+    @classmethod
+    def login(cls, user):
+        sql = cls.query\
+            .filter(cls.userid.like(user.userid))\
+            .filter(cls.password.like(user.password))
+        df = pd.read_sql(sql.statement, sql.session.bind)
+        print(json.loads(df.to_json(orient='records')))
+        return json.loads(df.to_json(orient='records'))
+            
+
+    @staticmethod
+    def save(user):
+        db.session.add(user)
+        db.session.commit()
+
+    @staticmethod   
+    def insert_many():
+        service = UserService()
+        Session = openSession()
+        session = Session()
+        df = service.hook()
+        print(df.head())
+        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
+        session.commit()
+        session.close()
+
+    @staticmethod
+    def modify_user(user):
+        db.session.add(user)
+        db.session.commit()
+
+    @classmethod
+    def delete_user(cls,id):
+        data = cls.query.get(id)
+        db.session.delete(data)
+        db.session.commit()
+        
+    
+
+'''    
+u = UserDao()
+u.insert_many()
+'''
+
+
+
 
 """
 context: /Users/bitcamp/SbaProjects
@@ -31,8 +169,12 @@ Ticket : Ticket Number
 Fare : Boarding Charges
 Cabin : Room number
 Embarked : a Port Name on Board C = Cherbourg, Q = Queenstown, S = Southhampton
-"""
-
+"""   
+# ==============================================================
+# ==============================================================
+# ====================     Service  ============================
+# ==============================================================
+# ==============================================================
 
 class UserService:
     def __init__(self):
@@ -110,24 +252,7 @@ class UserService:
         # print(self.odf)
         # print(df)
         sumdf = pd.concat([self.odf, df], axis=1)
-        
-        '''
-userid password                                               name  pclass  gender age_group  embarked  rank
-0         1        1                            Braund, Mr. Owen Harris       3       0         4         1     1
-1         2        1  Cumings, Mrs. John Bradley (Florence Briggs Th...       1       1         6         2     3
-2         3        1                             Heikkinen, Miss. Laina       3       1         5         1     2
-3         4        1       Futrelle, Mrs. Jacques Heath (Lily May Peel)       1       1         5         1     3
-4         5        1                           Allen, Mr. William Henry       3       0         5         1     1
-..      ...      ...                                                ...     ...     ...       ...       ...   ...
-886     887        1                              Montvila, Rev. Juozas       2       0         5         1     6
-887     888        1                       Graham, Miss. Margaret Edith       1       1         4         1     2
-888     889        1           Johnston, Miss. Catherine Helen "Carrie"       3       1         2         1     2
-889     890        1                              Behr, Mr. Karl Howell       1       0         5         2     1
-890     891        1                                Dooley, Mr. Patrick       3       0         5         3     1
 
-[891 rows x 8 columns]
-        
-        '''
         return sumdf
         
     
@@ -351,3 +476,87 @@ userid password                                               name  pclass  gend
 service = UserService()
 service.hook()
 '''
+# ==============================================================
+# ==============================================================
+# =================     Controller  ============================
+# ==============================================================
+# ==============================================================
+
+parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
+parser.add_argument('userid', type=str, required=True,
+                                        help='This field should be a userid')
+parser.add_argument('password', type=str, required=True,
+                                        help='This field should be a password')
+
+class User(Resource):
+    @staticmethod
+    def post():
+        args = parser.parse_args()
+        print(f'User {args["id"]} added ')
+        params = json.loads(request.get_data(), encoding='utf-8')
+        if len(params) == 0:
+
+            return 'No parameter'
+
+        params_str = ''
+        for key in params.keys():
+            params_str += 'key: {}, value: {}<br>'.format(key, params[key])
+        return {'code':0, 'message': 'SUCCESS'}, 200
+    @staticmethod
+    def get(id):
+        print(f'User {id} added ')
+        try:
+            user = UserDao.find_by_id(id)
+            if user:
+                return user.json()
+        except Exception as e:
+            return {'message': 'User not found'}, 404
+
+    @staticmethod
+    def update():
+        args = parser.parse_args()
+        print(f'User {args["id"]} updated ')
+        return {'code':0, 'message': 'SUCCESS'}, 200
+
+    @staticmethod
+    def delete():
+        args = parser.parse_args()
+        print(f'USer {args["id"]} deleted')
+        return {'code' : 0, 'message' : 'SUCCESS'}, 200    
+
+class Users(Resource):
+    
+    def post(self):
+        ud = UserDao()
+        ud.insert_many('users')
+
+    def get(self):
+        data = UserDao.find_all()
+        return data, 200
+
+class Auth(Resource):
+
+    def post(self):
+        body = request.get_json()
+        user = UserDto(**body)
+        UserDao.save(user)
+        id = user.userid
+        
+        return {'id': str(id)}, 200 
+
+
+class Access(Resource):
+    
+    def post(self):
+        args = parser.parse_args()
+        user = UserVo()
+        user.userid = args.userid
+        user.password = args.password
+        print(user.userid)
+        print(user.password)
+        data = UserDao.login(user)
+        return data[0], 200
+
+
+
+

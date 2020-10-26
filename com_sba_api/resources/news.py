@@ -2,12 +2,11 @@ from com_sba_api.ext.db import db
 from typing import List
 from flask import request
 from flask_restful import Resource, reqparse
-from com_sba_api.user.dao import UserDao
-from com_sba_api.user.dto import UserDto, UserVo
+
 import json
 from flask import jsonify
 
-
+'''
 class News_(Resource):
     def get(self):
         return {'news': list(map(lambda news: news.json(), NewsDao.find_all()))}
@@ -102,3 +101,4 @@ class News(Resource):
         news.save()
         return news.json()
 
+'''

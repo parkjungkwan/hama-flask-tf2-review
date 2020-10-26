@@ -33,6 +33,9 @@ class ItemDto(db.Model):
         db.session.delete(self)
         db.session.commit()
         
+class ItemVo():
+    ...
+
 class ItemDao(ItemDto):
     
     @classmethod
@@ -46,3 +49,13 @@ class ItemDao(ItemDto):
     @classmethod
     def find_by_id(cls, id):
         return cls.query.filter_by(id == id).first()
+
+class ItemService(object):
+    ...
+
+class Item(Resource):
+    ...
+
+class Items(Resource):
+    ... 
+
