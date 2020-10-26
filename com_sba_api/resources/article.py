@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse
-from com_sba_api.ext.db import db
+from com_sba_api.ext.db import db, openSession
 from com_sba_api.resources.user import UserDto
 from com_sba_api.resources.item import ItemDto
 
@@ -7,40 +7,32 @@ class ArticleDto(db.Model):
     __tablename__ = "articles"
     __table_args__={'mysql_collate':'utf8_general_ci'}
 
-    id: int = db.Column(db.Integer, primary_key=True, index=True)
+    art_id: int = db.Column(db.Integer, primary_key=True, index=True)
     title: str = db.Column(db.String(100))
     content: str = db.Column(db.String(500))
 
-    userid: str = db.Column(db.String(30), db.ForeignKey(UserDto.userid))
-    item_id: int = db.Column(db.Integer, db.ForeignKey(ItemDto.id))
+    user_id: str = db.Column(db.String(30), db.ForeignKey(UserDto.user_id))
+    item_id: int = db.Column(db.Integer, db.ForeignKey(ItemDto.item_id))
 
-    def __init__(self, title, content, userid, item_id):
+    def __init__(self, title, content, user_id, item_id):
         self.title = title
         self.content = content
-        self.userid = userid
+        self.user_id = user_id
         self.item_id = item_id
 
     def __repr__(self):
-        return f'id={self.id}, user_id={self.userid}, item_id={self.item_id},\
+        return f'art_id={self.art_id}, user_id={self.user_id}, item_id={self.item_id},\
             title={self.title}, content={self.content}'
 
     @property
     def json(self):
         return {
-            'id': self.id,
-            'userid': self.userid,
+            'art_id': self.art_id,
+            'user_id': self.user_id,
             'item_id' : self.item_id,
             'title' : self.title,
             'content' : self.content
         }
-
-    def save(self):
-        db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
 
 class ArticleDao(ArticleDto):
     
@@ -56,34 +48,65 @@ class ArticleDao(ArticleDto):
     def find_by_id(cls, id):
         return cls.query.filter_by(id == id).first()
 
+    @staticmethod
+    def save(article):
+        print('# ==============================================================')
+        print(article)
+        Session = openSession()
+        session = Session()
+        newArticle = ArticleDto(title = article['user_id'], 
+                                content = article['content'], 
+                                user_id = article['user_id'], 
+                                item_id = article['item_id'])
+        session.add(newArticle)
+        session.commit()
+
+    @staticmethod
+    def modify(article):
+        Session = openSession()
+        session = Session()
+        session.add(article)
+        session.commit()
+
     @classmethod
-    def write_aritcle(cls):
-        ...
+    def delete(cls,art_id):
+        Session = openSession()
+        session = Session()
+        data = cls.query.get(art_id)
+        session.delete(data)
+        session.commit()
 
+# ==============================================================
+# ==============================================================
+# ====================     Controller  ========================
+# ==============================================================
+# ==============================================================
+
+
+parser = reqparse.RequestParser()
+parser.add_argument('user_id', type=int, required=False, help='This field cannot be left blank')
+parser.add_argument('item_id', type=int, required=False, help='This field cannot be left blank')
+parser.add_argument('title', type=str, required=False, help='This field cannot be left blank')
+parser.add_argument('content', type=str, required=False, help='This field cannot be left blank')
 class Article(Resource):
-    def __init__(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('id', type=int, required=False, help='This field cannot be left blank')
-        parser.add_argument('userid', type=int, required=False, help='This field cannot be left blank')
-        parser.add_argument('itemid', type=int, required=False, help='This field cannot be left blank')
-        parser.add_argument('title', type=str, required=False, help='This field cannot be left blank')
-        parser.add_argument('content', type=str, required=False, help='This field cannot be left blank')
-
-    
-    def post(self):
-        data = self.parset.parse_args()
-        article = ArticleDto(data['title'], data['content'], data['user_id'], data['item_id'])
+        
+    @staticmethod    
+    def post():
+        args = parser.parse_args()
+        article = ArticleDto(args['title'], args['content'],\
+             args['user_id'], args['item_id'])
         print('******************')
         print('******************')
         print('******************')
         print('******************')
         print('******************')
-        print(f'{data}')
+        print(f'{args}')
         try: 
-            article.save()
+            ArticleDao.save(args)
+            return {'code' : 0, 'message' : 'SUCCESS'}, 200    
         except:
             return {'message': 'An error occured inserting the article'}, 500
-        return article.json(), 201
+        
     
     
     def get(self, id):

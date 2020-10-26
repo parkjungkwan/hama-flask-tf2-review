@@ -30,7 +30,7 @@ def initialize_routes(api):
     api.add_resource(Users, '/api/users')
     api.add_resource(Auth, '/api/auth')
     api.add_resource(Access, '/api/access')
-    api.add_resource(Article, '/api/article/<string:id>')
+    api.add_resource(Article, '/api/article')
     api.add_resource(Articles, '/api/articles/')
 
 @user.errorhandler(500)

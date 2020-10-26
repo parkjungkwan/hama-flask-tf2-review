@@ -19,10 +19,10 @@ from sklearn.svm import SVC # svm
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold  # k value is understood as count
 from sklearn.model_selection import cross_val_score
-
+from sqlalchemy import func
 from pathlib import Path
 '''
-userid password                                               name  pclass  gender age_group  embarked  rank
+user_id password                                               name  pclass  gender age_group  embarked  rank
 0         1        1                            Braund, Mr. Owen Harris       3       0         4         1     1
 1         2        1  Cumings, Mrs. John Bradley (Florence Briggs Th...       1       1         6         2     3
 2         3        1                             Heikkinen, Miss. Laina       3       1         5         1     2
@@ -41,7 +41,7 @@ class UserDto(db.Model):
     __tablename__ = 'users'
     __table_args__={'mysql_collate':'utf8_general_ci'}
 
-    userid: str = db.Column(db.String(10), primary_key = True, index = True)
+    user_id: str = db.Column(db.String(10), primary_key = True, index = True)
     password: str = db.Column(db.String(1))
     name: str = db.Column(db.String(100))
     pclass: int = db.Column(db.Integer)
@@ -50,8 +50,8 @@ class UserDto(db.Model):
     embarked: int = db.Column(db.Integer)
     rank: int = db.Column(db.Integer)
 
-    def __init__(self, userid, password, name, pclass, gender, age_group, embarked, rank):
-        self.userid = userid
+    def __init__(self, user_id, password, name, pclass, gender, age_group, embarked, rank):
+        self.user_id = user_id
         self.password = password
         self.name = name
         self.pclass = pclass
@@ -61,26 +61,26 @@ class UserDto(db.Model):
         self.rank = rank
 
     def __repr__(self):
-        return f'User(id={self.id},userid={self.userid},\
+        return f'User(user_id={self.user_id},\
             password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
                 age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
 
     @property
     def json(self):
         return {
-            'userid' : self.userid,
+            'userId' : self.user_id,
             'password' : self.password,
             'name' : self.name,
             'pclass' : self.pclass,
             'gender' : self.gender,
-            'age_group' : self.age_group,
+            'ageGroup' : self.age_group,
             'embarked' : self.embarked,
             'rank' : self.rank
         }
 
     
 class UserVo:
-    userid: str = ''
+    user_id: str = ''
     password: str = ''
     name: str = ''
     pclass: int = 0
@@ -94,6 +94,10 @@ class UserVo:
 class UserDao(UserDto):
 
     @classmethod
+    def count(cls):
+        return cls.query.count()
+
+    @classmethod
     def find_all(cls):
         sql = cls.query
         df = pd.read_sql(sql.statement, sql.session.bind)
@@ -101,16 +105,17 @@ class UserDao(UserDto):
 
     @classmethod
     def find_by_name(cls, name):
-        return cls.query.filer_by(name == name).all()
+        return cls.query.filer_by(name == name)
 
     @classmethod
-    def find_by_id(cls, userid):
-        return cls.query.filter_by(userid == userid).first()
+    def find_by_id(cls, user_id):
+        return cls.query.filter_by(user_id == user_id)
+
 
     @classmethod
     def login(cls, user):
         sql = cls.query\
-            .filter(cls.userid.like(user.userid))\
+            .filter(cls.user_id.like(user.user_id))\
             .filter(cls.password.like(user.password))
         df = pd.read_sql(sql.statement, sql.session.bind)
         print(json.loads(df.to_json(orient='records')))
@@ -146,10 +151,9 @@ class UserDao(UserDto):
         
     
 
-'''    
-u = UserDao()
-u.insert_many()
-'''
+    
+
+
 
 
 
@@ -179,8 +183,7 @@ Embarked : a Port Name on Board C = Cherbourg, Q = Queenstown, S = Southhampton
 class UserService:
     def __init__(self):
         self.fileReader = FileReader()  
-        self.data = os.path.abspath("data")
-        
+        self.data = os.path.join(os.path.abspath(os.path.dirname(__file__))+'\\data')
         self.odf = None
 
     def hook(self):
@@ -196,7 +199,7 @@ class UserService:
         self.odf = pd.DataFrame(
 
             {
-             'userid' : this.train.PassengerId,
+             'user_id' : this.train.PassengerId,
              'password' : '1',
              'name' : this.train.Name
              }
@@ -483,8 +486,8 @@ service.hook()
 # ==============================================================
 
 parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
-parser.add_argument('userid', type=str, required=True,
-                                        help='This field should be a userid')
+parser.add_argument('userId', type=str, required=True,
+                                        help='This field should be a userId')
 parser.add_argument('password', type=str, required=True,
                                         help='This field should be a password')
 
@@ -540,7 +543,7 @@ class Auth(Resource):
         body = request.get_json()
         user = UserDto(**body)
         UserDao.save(user)
-        id = user.userid
+        id = user.user_id
         
         return {'id': str(id)}, 200 
 
@@ -550,9 +553,9 @@ class Access(Resource):
     def post(self):
         args = parser.parse_args()
         user = UserVo()
-        user.userid = args.userid
+        user.user_id = args.userId
         user.password = args.password
-        print(user.userid)
+        print(user.user_id)
         print(user.password)
         data = UserDao.login(user)
         return data[0], 200
