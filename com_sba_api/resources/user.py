@@ -35,6 +35,8 @@ user_id password                                               name  pclass  gen
 889     890        1                              Behr, Mr. Karl Howell       1       0         5         2     1
 890     891        1                                Dooley, Mr. Patrick       3       0         5         3     1
 [891 rows x 8 columns]
+
+https://weicomes.tistory.com/262
 '''
 class UserDto(db.Model):
 
@@ -88,74 +90,6 @@ class UserVo:
     age_group: int = 0
     embarked: int = 0
     rank: int =  0
-
-
-
-class UserDao(UserDto):
-
-    @classmethod
-    def count(cls):
-        return cls.query.count()
-
-    @classmethod
-    def find_all(cls):
-        sql = cls.query
-        df = pd.read_sql(sql.statement, sql.session.bind)
-        return json.loads(df.to_json(orient='records'))
-
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filer_by(name == name)
-
-    @classmethod
-    def find_by_id(cls, user_id):
-        return cls.query.filter_by(user_id == user_id)
-
-
-    @classmethod
-    def login(cls, user):
-        sql = cls.query\
-            .filter(cls.user_id.like(user.user_id))\
-            .filter(cls.password.like(user.password))
-        df = pd.read_sql(sql.statement, sql.session.bind)
-        print(json.loads(df.to_json(orient='records')))
-        return json.loads(df.to_json(orient='records'))
-            
-
-    @staticmethod
-    def save(user):
-        db.session.add(user)
-        db.session.commit()
-
-    @staticmethod   
-    def insert_many():
-        service = UserService()
-        Session = openSession()
-        session = Session()
-        df = service.hook()
-        print(df.head())
-        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
-        session.commit()
-        session.close()
-
-    @staticmethod
-    def modify_user(user):
-        db.session.add(user)
-        db.session.commit()
-
-    @classmethod
-    def delete_user(cls,id):
-        data = cls.query.get(id)
-        db.session.delete(data)
-        db.session.commit()
-        
-    
-
-    
-
-
-
-
 
 
 """
@@ -479,6 +413,81 @@ class UserService:
 service = UserService()
 service.hook()
 '''
+
+Session = openSession()
+session = Session()
+service = UserService()
+
+class UserDao(UserDto):
+
+    @staticmethod
+    def count():
+        return session.query(func.count(UserDto.user_id)).one()
+
+    @staticmethod
+    def save(user):
+        db.session.add(user)
+        db.session.commit()
+
+    @staticmethod   
+    def bulk():
+        service = UserService()
+        Session = openSession()
+        session = Session()
+        df = service.hook()
+        print(df.head())
+        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
+        session.commit()
+        session.close()
+
+    @staticmethod
+    def modify_user(user):
+        db.session.add(user)
+        db.session.commit()
+
+    @classmethod
+    def delete_user(cls,id):
+        data = cls.query.get(id)
+        db.session.delete(data)
+        db.session.commit()
+
+    @classmethod
+    def find_all(cls):
+        sql = cls.query
+        df = pd.read_sql(sql.statement, sql.session.bind)
+        return json.loads(df.to_json(orient='records'))
+
+    @classmethod
+    def find_by_name(cls, name):
+        return cls.query.filer_by(name == name)
+
+    @classmethod
+    def find_by_id(cls, user_id):
+        return cls.query.filter_by(user_id == user_id)
+
+
+    @classmethod
+    def login(cls, user):
+        sql = cls.query\
+            .filter(cls.user_id.like(user.user_id))\
+            .filter(cls.password.like(user.password))
+        df = pd.read_sql(sql.statement, sql.session.bind)
+        print(json.loads(df.to_json(orient='records')))
+        return json.loads(df.to_json(orient='records'))
+            
+
+    
+        
+    
+
+    
+
+
+
+
+
+
+
 # ==============================================================
 # ==============================================================
 # =================     Controller  ============================
@@ -531,7 +540,7 @@ class Users(Resource):
     
     def post(self):
         ud = UserDao()
-        ud.insert_many('users')
+        ud.bulk('users')
 
     def get(self):
         data = UserDao.find_all()

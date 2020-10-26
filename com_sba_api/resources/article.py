@@ -50,8 +50,6 @@ class ArticleDao(ArticleDto):
 
     @staticmethod
     def save(article):
-        print('# ==============================================================')
-        print(article)
         Session = openSession()
         session = Session()
         newArticle = ArticleDto(title = article['user_id'], 
@@ -78,7 +76,7 @@ class ArticleDao(ArticleDto):
 
 # ==============================================================
 # ==============================================================
-# ====================     Controller  ========================
+# ====================        API       ========================
 # ==============================================================
 # ==============================================================
 
@@ -95,12 +93,6 @@ class Article(Resource):
         args = parser.parse_args()
         article = ArticleDto(args['title'], args['content'],\
              args['user_id'], args['item_id'])
-        print('******************')
-        print('******************')
-        print('******************')
-        print('******************')
-        print('******************')
-        print(f'{args}')
         try: 
             ArticleDao.save(args)
             return {'code' : 0, 'message' : 'SUCCESS'}, 200    
