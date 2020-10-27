@@ -1,6 +1,5 @@
-import time
-curr = time.strftime('%H%M%S')
+from datetime import datetime
 print(f'===========================================')
-print(f'=== com_sba_api initialized at {curr} =====')
+print(f'com_sba_api initialized at {datetime.now()} ')
 print(f'===========================================')
 

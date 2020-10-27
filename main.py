@@ -18,9 +18,9 @@ with app.app_context():
     db.create_all()
 with app.app_context():
     count = UserDao.count()
-    print(f'>>>>>>>>> Users Total Count is {count}')
-    if count == 0:
-        UserDao.insert_many()
+    print(f' Users Total Count is {count}') #  (891,)
+    if count[0] == 0:
+        UserDao.bulk()
 
 initialize_routes(api)
 
