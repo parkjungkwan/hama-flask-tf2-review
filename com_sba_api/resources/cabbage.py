@@ -216,7 +216,7 @@ class CabbageModel(object):
 
 class CabbageService(object):
     def __init__(self):
-        self.path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'models','cabbage')
+        self.path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'models','cabbage2')
        
     avg_temp: float = 0.0
     min_temp: float = 0.0
@@ -247,6 +247,10 @@ class CabbageService(object):
 
 
 if __name__ == "__main__":
+    c = CabbageModel()
+    c.new_model()
+
+    '''
     service = CabbageService()
     cabbage = CabbageVo()
     cabbage.avg_temp = 10
@@ -256,7 +260,7 @@ if __name__ == "__main__":
     service.assign(cabbage)
     price = service.predict()
     print(f'Predicted Cabbage Price is {price} won')
-
+    '''
 
 
 # ==============================================================
