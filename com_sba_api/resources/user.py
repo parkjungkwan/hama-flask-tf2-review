@@ -21,75 +21,6 @@ from sklearn.model_selection import KFold  # k value is understood as count
 from sklearn.model_selection import cross_val_score
 from sqlalchemy import func
 from pathlib import Path
-'''
-user_id password                                               name  pclass  gender age_group  embarked  rank
-0         1        1                            Braund, Mr. Owen Harris       3       0         4         1     1
-1         2        1  Cumings, Mrs. John Bradley (Florence Briggs Th...       1       1         6         2     3
-2         3        1                             Heikkinen, Miss. Laina       3       1         5         1     2
-3         4        1       Futrelle, Mrs. Jacques Heath (Lily May Peel)       1       1         5         1     3
-4         5        1                           Allen, Mr. William Henry       3       0         5         1     1
-..      ...      ...                                                ...     ...     ...       ...       ...   ...
-886     887        1                              Montvila, Rev. Juozas       2       0         5         1     6
-887     888        1                       Graham, Miss. Margaret Edith       1       1         4         1     2
-888     889        1           Johnston, Miss. Catherine Helen "Carrie"       3       1         2         1     2
-889     890        1                              Behr, Mr. Karl Howell       1       0         5         2     1
-890     891        1                                Dooley, Mr. Patrick       3       0         5         3     1
-[891 rows x 8 columns]
-
-https://weicomes.tistory.com/262
-'''
-class UserDto(db.Model):
-
-    __tablename__ = 'users'
-    __table_args__={'mysql_collate':'utf8_general_ci'}
-
-    user_id: str = db.Column(db.String(10), primary_key = True, index = True)
-    password: str = db.Column(db.String(1))
-    name: str = db.Column(db.String(100))
-    pclass: int = db.Column(db.Integer)
-    gender: int = db.Column(db.Integer)
-    age_group: int = db.Column(db.Integer)
-    embarked: int = db.Column(db.Integer)
-    rank: int = db.Column(db.Integer)
-
-    def __init__(self, user_id, password, name, pclass, gender, age_group, embarked, rank):
-        self.user_id = user_id
-        self.password = password
-        self.name = name
-        self.pclass = pclass
-        self.gender = gender
-        self.age_group = age_group
-        self.embarked = embarked
-        self.rank = rank
-
-    def __repr__(self):
-        return f'User(user_id={self.user_id},\
-            password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
-                age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
-
-    @property
-    def json(self):
-        return {
-            'userId' : self.user_id,
-            'password' : self.password,
-            'name' : self.name,
-            'pclass' : self.pclass,
-            'gender' : self.gender,
-            'ageGroup' : self.age_group,
-            'embarked' : self.embarked,
-            'rank' : self.rank
-        }
-
-    
-class UserVo:
-    user_id: str = ''
-    password: str = ''
-    name: str = ''
-    pclass: int = 0
-    gender: int = 0
-    age_group: int = 0
-    embarked: int = 0
-    rank: int =  0
 
 
 """
@@ -108,13 +39,9 @@ Fare : Boarding Charges
 Cabin : Room number
 Embarked : a Port Name on Board C = Cherbourg, Q = Queenstown, S = Southhampton
 """   
-# ==============================================================
-# ==============================================================
-# ====================     Service  ============================
-# ==============================================================
-# ==============================================================
 
-class UserService:
+
+class UserPreprocess(object):
     def __init__(self):
         self.fileReader = FileReader()  
         self.data = os.path.join(os.path.abspath(os.path.dirname(__file__))+'\\data')
@@ -348,31 +275,31 @@ class UserService:
 
     def accuracy_by_dtree(self, this):
         dtree = DecisionTreeClassifier()
-        score = cross_val_score(dtree, this.train, this.label, cv=UserService.create_k_fold(),\
+        score = cross_val_score(dtree, this.train, this.label, cv=UserPreprocess.create_k_fold(),\
              n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
     def accuracy_by_rforest(self, this):
         rforest = RandomForestClassifier()
-        score = cross_val_score(rforest, this.train, this.label, cv=UserService.create_k_fold(), \
+        score = cross_val_score(rforest, this.train, this.label, cv=UserPreprocess.create_k_fold(), \
             n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_nb(self, this):
         nb = GaussianNB()
-        score = cross_val_score(nb, this.train, this.label, cv=UserService.create_k_fold(),\
+        score = cross_val_score(nb, this.train, this.label, cv=UserPreprocess.create_k_fold(),\
              n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_knn(self, this):
         knn = KNeighborsClassifier()
-        score = cross_val_score(knn, this.train, this.label, cv=UserService.create_k_fold(),\
+        score = cross_val_score(knn, this.train, this.label, cv=UserPreprocess.create_k_fold(),\
              n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
     def accuracy_by_svm(self, this):
         svm = SVC()
-        score = cross_val_score(svm, this.train, this.label, cv=UserService.create_k_fold(),\
+        score = cross_val_score(svm, this.train, this.label, cv=UserPreprocess.create_k_fold(),\
              n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
@@ -409,16 +336,102 @@ class UserService:
         sumdf = pd.concat([self.odf, df], axis=1)
         print(sumdf)
         return sumdf
+            
+
+
+
+
+
+
+
 '''
-service = UserService()
-service.hook()
+user_id password                                               name  pclass  gender age_group  embarked  rank
+0         1        1                            Braund, Mr. Owen Harris       3       0         4         1     1
+1         2        1  Cumings, Mrs. John Bradley (Florence Briggs Th...       1       1         6         2     3
+2         3        1                             Heikkinen, Miss. Laina       3       1         5         1     2
+3         4        1       Futrelle, Mrs. Jacques Heath (Lily May Peel)       1       1         5         1     3
+4         5        1                           Allen, Mr. William Henry       3       0         5         1     1
+..      ...      ...                                                ...     ...     ...       ...       ...   ...
+886     887        1                              Montvila, Rev. Juozas       2       0         5         1     6
+887     888        1                       Graham, Miss. Margaret Edith       1       1         4         1     2
+888     889        1           Johnston, Miss. Catherine Helen "Carrie"       3       1         2         1     2
+889     890        1                              Behr, Mr. Karl Howell       1       0         5         2     1
+890     891        1                                Dooley, Mr. Patrick       3       0         5         3     1
+[891 rows x 8 columns]
 '''
+
+
+
+
+
+
+
+class UserDto(db.Model):
+
+    __tablename__ = 'users'
+    __table_args__={'mysql_collate':'utf8_general_ci'}
+
+    user_id: str = db.Column(db.String(10), primary_key = True, index = True)
+    password: str = db.Column(db.String(1))
+    name: str = db.Column(db.String(100))
+    pclass: int = db.Column(db.Integer)
+    gender: int = db.Column(db.Integer)
+    age_group: int = db.Column(db.Integer)
+    embarked: int = db.Column(db.Integer)
+    rank: int = db.Column(db.Integer)
+
+    def __init__(self, user_id, password, name, pclass, gender, age_group, embarked, rank):
+        self.user_id = user_id
+        self.password = password
+        self.name = name
+        self.pclass = pclass
+        self.gender = gender
+        self.age_group = age_group
+        self.embarked = embarked
+        self.rank = rank
+
+    def __repr__(self):
+        return f'User(user_id={self.user_id},\
+            password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
+                age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
+
+    @property
+    def json(self):
+        return {
+            'userId' : self.user_id,
+            'password' : self.password,
+            'name' : self.name,
+            'pclass' : self.pclass,
+            'gender' : self.gender,
+            'ageGroup' : self.age_group,
+            'embarked' : self.embarked,
+            'rank' : self.rank
+        }
+
+    
+class UserVo:
+    user_id: str = ''
+    password: str = ''
+    name: str = ''
+    pclass: int = 0
+    gender: int = 0
+    age_group: int = 0
+    embarked: int = 0
+    rank: int =  0
 
 Session = openSession()
 session = Session()
-service = UserService()
+user_preprocess = UserPreprocess()
 
 class UserDao(UserDto):
+
+    @staticmethod   
+    def bulk():
+        df = user_preprocess.hook()
+        print(df.head())
+        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
+        session.commit()
+        session.close()
 
     @staticmethod
     def count():
@@ -429,24 +442,13 @@ class UserDao(UserDto):
         db.session.add(user)
         db.session.commit()
 
-    @staticmethod   
-    def bulk():
-        service = UserService()
-        Session = openSession()
-        session = Session()
-        df = service.hook()
-        print(df.head())
-        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
-        session.commit()
-        session.close()
-
     @staticmethod
-    def modify_user(user):
+    def update(user):
         db.session.add(user)
         db.session.commit()
 
     @classmethod
-    def delete_user(cls,id):
+    def delete(cls,id):
         data = cls.query.get(id)
         db.session.delete(data)
         db.session.commit()
@@ -476,23 +478,23 @@ class UserDao(UserDto):
         return json.loads(df.to_json(orient='records'))
             
 
-    
-        
-    
 
-    
-
-
-
-
+if __name__ == "__main__":
+    UserDao.bulk()
 
 
 
 # ==============================================================
 # ==============================================================
-# =================     Controller  ============================
 # ==============================================================
 # ==============================================================
+# ==============================================================
+
+
+
+
+
+
 
 parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
 parser.add_argument('userId', type=str, required=True,
@@ -514,9 +516,9 @@ class User(Resource):
         for key in params.keys():
             params_str += 'key: {}, value: {}<br>'.format(key, params[key])
         return {'code':0, 'message': 'SUCCESS'}, 200
+
     @staticmethod
-    def get(id):
-        print(f'User {id} added ')
+    def get(id: str):
         try:
             user = UserDao.find_by_id(id)
             if user:
@@ -537,18 +539,18 @@ class User(Resource):
         return {'code' : 0, 'message' : 'SUCCESS'}, 200    
 
 class Users(Resource):
-    
-    def post(self):
+    @staticmethod
+    def post():
         ud = UserDao()
         ud.bulk('users')
-
-    def get(self):
+    @staticmethod
+    def get():
         data = UserDao.find_all()
         return data, 200
 
 class Auth(Resource):
-
-    def post(self):
+    @staticmethod
+    def post():
         body = request.get_json()
         user = UserDto(**body)
         UserDao.save(user)
@@ -558,8 +560,8 @@ class Auth(Resource):
 
 
 class Access(Resource):
-    
-    def post(self):
+    @staticmethod
+    def post():
         args = parser.parse_args()
         user = UserVo()
         user.user_id = args.userId
@@ -568,6 +570,8 @@ class Access(Resource):
         print(user.password)
         data = UserDao.login(user)
         return data[0], 200
+
+
 
 
 

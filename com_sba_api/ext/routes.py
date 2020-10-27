@@ -5,6 +5,7 @@ from com_sba_api.resources.home import Home
 from com_sba_api.resources.item import Item, Items
 from com_sba_api.resources.user import User, Users, Auth, Access
 from com_sba_api.resources.article import Article, Articles
+from com_sba_api.resources.cabbage import Cabbage
 
 home = Blueprint('home', __name__, url_prefix='/api')
 user = Blueprint('user', __name__, url_prefix='/api/user')
@@ -13,6 +14,7 @@ auth = Blueprint('auth', __name__, url_prefix='/api/auth')
 access = Blueprint('access', __name__, url_prefix='/api/access')
 article = Blueprint('article', __name__, url_prefix='/api/article')
 articles = Blueprint('articles', __name__, url_prefix='/api/articles')
+cabbage = Blueprint('cabbage', __name__, url_prefix='/api/cabbage')
 
 api = Api(home)
 api = Api(user)
@@ -32,6 +34,7 @@ def initialize_routes(api):
     api.add_resource(Access, '/api/access')
     api.add_resource(Article, '/api/article')
     api.add_resource(Articles, '/api/articles/')
+    api.add_resource(Cabbage, '/api/cabbage')
 
 @user.errorhandler(500)
 def user_api_error(e):
@@ -46,4 +49,9 @@ def home_api_error(e):
 @article.errorhandler(500)
 def article_api_error(e):
     logging.exception('An error occurred during article request. %s' % str(e))
+    return 'An internal error occurred.', 500
+
+@cabbage.errorhandler(500)
+def cabbage_api_error(e):
+    logging.exception('An error occurred during cabbage request. %s' % str(e))
     return 'An internal error occurred.', 500
