@@ -2,6 +2,17 @@ from flask_restful import Resource
 from flask import Response, jsonify
 from com_sba_api.ext.db import db
 
+class ItemService(object):
+    ...
+
+    
+# ==============================================================
+# ==========================             =======================
+# ==========================    Model    =======================
+# ==========================             =======================
+# ==============================================================
+
+
 class ItemDto(db.Model):
     __tablename__='items'
     __table_args__={'mysql_collate':'utf8_general_ci'}
@@ -50,8 +61,17 @@ class ItemDao(ItemDto):
     def find_by_id(cls, id):
         return cls.query.filter_by(id == id).first()
 
-class ItemService(object):
-    ...
+
+
+
+
+# ==============================================================
+# ====================                  ========================
+# ====================     RESOURCE     ========================
+# ====================                  ========================
+# ==============================================================
+
+
 
 class Item(Resource):
     ...
