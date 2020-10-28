@@ -21,7 +21,7 @@ from sklearn.model_selection import KFold  # k value is understood as count
 from sklearn.model_selection import cross_val_score
 from sqlalchemy import func
 from pathlib import Path
-
+from sqlalchemy import and_, or_
 
 """
 context: /Users/bitcamp/SbaProjects
@@ -39,7 +39,11 @@ Fare : Boarding Charges
 Cabin : Room number
 Embarked : a Port Name on Board C = Cherbourg, Q = Queenstown, S = Southhampton
 """   
-
+# ==============================================================
+# ====================                     =====================
+# ====================    Preprocessing    =====================
+# ====================                     =====================
+# ==============================================================
 
 class UserPreprocess(object):
     def __init__(self):
@@ -360,11 +364,11 @@ user_id password                                               name  pclass  gen
 [891 rows x 8 columns]
 '''
 
-
-
-
-
-
+# ==============================================================
+# =======================                =======================
+# =======================    Modeling    =======================
+# =======================                =======================
+# ==============================================================
 
 class UserDto(db.Model):
 
@@ -459,15 +463,69 @@ class UserDao(UserDto):
         df = pd.read_sql(sql.statement, sql.session.bind)
         return json.loads(df.to_json(orient='records'))
 
-    @classmethod
-    def find_by_name(cls, name):
-        return cls.query.filer_by(name == name)
-
+    
+    '''
+    SELECT *
+    FROM users
+    WHERE user_name LIKE 'a'
+    '''
+    # like() method itself produces the LIKE criteria 
+    # for WHERE clause in the SELECT expression.
+    
     @classmethod
     def find_by_id(cls, user_id):
-        return cls.query.filter_by(user_id == user_id)
+        return session.query(UserDto).filter(UserDto.user_id.like(user_id))
 
+    
+    '''
+    SELECT *
+    FROM users
+    WHERE user_name LIKE 'name'
+    '''
+    # the meaning of the symbol %
+    # A% ==> Apple
+    # %A ==> NA
+    # %A% ==> Apple, NA, BAG 
+    @classmethod
+    def find_by_name(cls, name):
+        return session.query(UserDto).filter(UserDto.user_id.like(f'%{name}%'))
 
+    '''
+    SELECT *
+    FROM users
+    WHERE user_id IN (start, end)
+    '''
+    # List of users from start to end ?
+    @classmethod
+    def find_users_in_category(cls, start, end):
+        return session.query(UserDto)\
+                      .filter(UserDto.user_id.in_([start,end]))
+
+    '''
+    SELECT *
+    FROM users
+    WHERE gender LIKE 'gender' AND name LIKE 'name%'
+    '''
+    # Please enter this at the top. 
+    # from sqlalchemy import and_
+    @classmethod
+    def find_users_by_gender_and_name(cls, gender, name):
+        return session.query(UserDto)\
+                      .filter(and_(UserDto.gender.like(gender), UserDto.name.like(f'{name}%')))
+
+    '''
+    SELECT *
+    FROM users
+    WHERE pclass LIKE '1' OR age_group LIKE '3'
+    '''
+    # Please enter this at the top. 
+    # from sqlalchemy import or_
+    @classmethod
+    def find_users_by_gender_and_name(cls, gender, age_group):
+        return session.query(UserDto)\
+                      .filter(or_(UserDto.pclass.like(gender), UserDto.age_group.like(f'{age_group}%')))
+    
+    
     @classmethod
     def login(cls, user):
         sql = cls.query\
@@ -485,15 +543,10 @@ if __name__ == "__main__":
 
 
 # ==============================================================
+# =====================                  =======================
+# =====================    Resourcing    =======================
+# =====================                  =======================
 # ==============================================================
-# ==============================================================
-# ==============================================================
-# ==============================================================
-
-
-
-
-
 
 
 parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed

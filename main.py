@@ -17,13 +17,6 @@ db.init_app(app)
 api = Api(app)
 with app.app_context():
     db.create_all()
-<<<<<<< HEAD
-with app.app_context():
-    count = UserDao.count()
-    print(f' Users Total Count is {count}') #  (891,)
-    if count[0] == 0:
-        UserDao.bulk()
-=======
     user_count = UserDao.count()
     print(f'***** Users Total Count is {user_count} *****')
     if user_count[0] == 0:
@@ -33,7 +26,6 @@ with app.app_context():
     print(f'***** Cabbages Total Count is {cabb_count} *****')
     if cabb_count[0] == 0:
         CabbageDao.bulk()
->>>>>>> c0e16ae48271dbf65a2a6be2235ebd83f0913df4
 
 initialize_routes(api)
 
