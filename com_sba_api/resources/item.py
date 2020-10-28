@@ -17,24 +17,16 @@ class ItemDto(db.Model):
 
     item_id : int = db.Column(db.Integer, primary_key=True, index=True)
     item_name : str = db.Column(db.String(30))
-    measurement = db.Column(db.String, nullable=True)
-    default_price = db.Column(db.Float, nullable=True)
-    minimum_order = db.Column(db.Float, nullable=True)
-    maximum_order = db.Column(db.Float, nullable=True)
-    orders = db.relationship('Order', back_populates='item')
-    prices = db.relationship('Price', back_populates='item')
-    articles = db.relationship('ArticleDto', lazy='dynamic')
+    default_price = db.Column(db.Integer, nullable=True)
+   
 
-    def __init__(self, item_name, measurement, default_price,
-                    minimum_order, maximum_order):
+    orders = db.relationship('OrderDto', back_populates='item', lazy='dynamic')
+    prices = db.relationship('PriceDto', back_populates='item', lazy='dynamic')
+    articles = db.relationship('ArticleDto', back_populates='item', lazy='dynamic')
+
+    def __init__(self, item_name, default_price):
         self.item_name = item_name
         self.default_price = default_price
-        self.item_name = item_name
-        self.measurement = measurement
-        self.default_price = default_price
-        self.minimum_order = minimum_order
-        self.maximum_order = maximum_order
-        
 
 
     def __repr__(self):

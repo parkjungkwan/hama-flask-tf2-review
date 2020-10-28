@@ -384,6 +384,10 @@ class UserDto(db.Model):
     embarked: int = db.Column(db.Integer)
     rank: int = db.Column(db.Integer)
 
+    orders = db.relationship('OrderDto', back_populates='user', lazy='dynamic')
+    prices = db.relationship('PriceDto', back_populates='user', lazy='dynamic')
+    articles = db.relationship('ArticleDto', back_populates='user', lazy='dynamic')
+
     def __init__(self, user_id, password, name, pclass, gender, age_group, embarked, rank):
         self.user_id = user_id
         self.password = password
@@ -474,7 +478,7 @@ class UserDao(UserDto):
     
     @classmethod
     def find_by_id(cls, user_id):
-        return session.query(UserDto).filter(UserDto.user_id.like(user_id))
+        return session.query(UserDto).filter(UserDto.user_id.like(user_id)).one()
 
     
     '''
@@ -488,7 +492,7 @@ class UserDao(UserDto):
     # %A% ==> Apple, NA, BAG 
     @classmethod
     def find_by_name(cls, name):
-        return session.query(UserDto).filter(UserDto.user_id.like(f'%{name}%'))
+        return session.query(UserDto).filter(UserDto.user_id.like(f'%{name}%')).all()
 
     '''
     SELECT *
@@ -499,7 +503,7 @@ class UserDao(UserDto):
     @classmethod
     def find_users_in_category(cls, start, end):
         return session.query(UserDto)\
-                      .filter(UserDto.user_id.in_([start,end]))
+                      .filter(UserDto.user_id.in_([start,end])).all()
 
     '''
     SELECT *
@@ -511,7 +515,7 @@ class UserDao(UserDto):
     @classmethod
     def find_users_by_gender_and_name(cls, gender, name):
         return session.query(UserDto)\
-                      .filter(and_(UserDto.gender.like(gender), UserDto.name.like(f'{name}%')))
+                      .filter(and_(UserDto.gender.like(gender), UserDto.name.like(f'{name}%'))).all()
 
     '''
     SELECT *
@@ -523,15 +527,15 @@ class UserDao(UserDto):
     @classmethod
     def find_users_by_gender_and_name(cls, gender, age_group):
         return session.query(UserDto)\
-                      .filter(or_(UserDto.pclass.like(gender), UserDto.age_group.like(f'{age_group}%')))
+                      .filter(or_(UserDto.pclass.like(gender), UserDto.age_group.like(f'{age_group}%'))).all()
     
     
     @classmethod
     def login(cls, user):
-        sql = cls.query\
+        query = cls.query\
             .filter(cls.user_id.like(user.user_id))\
             .filter(cls.password.like(user.password))
-        df = pd.read_sql(sql.statement, sql.session.bind)
+        df = pd.read_sql(query.statement, query.session.bind)
         print(json.loads(df.to_json(orient='records')))
         return json.loads(df.to_json(orient='records'))
             

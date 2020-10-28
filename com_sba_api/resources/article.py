@@ -11,8 +11,10 @@ class ArticleDto(db.Model):
     title: str = db.Column(db.String(100))
     content: str = db.Column(db.String(500))
 
-    user_id: str = db.Column(db.String(30), db.ForeignKey(UserDto.user_id))
-    item_id: int = db.Column(db.Integer, db.ForeignKey(ItemDto.item_id))
+    user_id = db.Column(db.String(10), db.ForeignKey(UserDto.user_id))
+    user = db.relationship('UserDto', back_populates='articles')
+    item_id = db.Column(db.Integer, db.ForeignKey(ItemDto.item_id))
+    item = db.relationship('ItemDto', back_populates='articles')
 
     def __init__(self, title, content, user_id, item_id):
         self.title = title
@@ -127,6 +129,7 @@ class Article(Resource):
         article.content = data['content']
         article.save()
         return article.json()
+
 
 
 

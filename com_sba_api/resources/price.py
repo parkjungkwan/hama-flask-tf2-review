@@ -9,18 +9,17 @@ from com_sba_api.resources.user import UserDto
 # =======================                =======================
 # ==============================================================
 
-class Price(db.Model):
+class PriceDto(db.Model):
     
        __tablename__ = 'prices'
 
        price_id = db.Column(db.Integer, primary_key=True)
-       user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-       user = db.relationship('User', back_populates='prices')
-       item_id = db.Column(db.Integer, db.ForeignKey('items.id'))
-       item = db.relationship('Item', back_populates='prices')
-       available = db.Column(db.Boolean)
-       price_measurement = db.Column(db.String)
        price = db.Column(db.Float)
+
+       user_id = db.Column(db.String(10), db.ForeignKey(UserDto.user_id))
+       user = db.relationship('UserDto', back_populates='prices')
+       item_id = db.Column(db.Integer, db.ForeignKey(ItemDto.item_id))
+       item = db.relationship('ItemDto', back_populates='prices')
 
        def __init__(self, userId, itemId, priceMeasurement, price):
            self.userId = userId
