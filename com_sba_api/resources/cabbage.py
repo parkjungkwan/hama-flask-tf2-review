@@ -21,7 +21,7 @@ tf.disable_v2_behavior()
 # ====================                     =====================
 # ==============================================================
 
-class CabbagePreprocess(object):
+class CabbageDf(object):
     def __init__(self):
         self.fileReader = FileReader()  
         self.data = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'data')
@@ -35,7 +35,7 @@ class CabbagePreprocess(object):
         print(f'{this.fname}')
         return pd.read_csv(Path(self.data, this.fname)) 
 
-    def new_dataframe(self):
+    def new(self):
         this = self.fileReader
         price_data = 'price_data.csv'
         this.train = self.new_train(price_data)
@@ -61,7 +61,7 @@ class CabbagePreprocess(object):
     
 
 '''
-CabbagePreprocess.newDataframe()
+CabbageDF.new()
           year  avgTemp  minTemp  maxTemp  rainFall  avgPrice
 0     20100101     -4.9    -11.0      0.9       0.0      2123
 1     20100102     -3.1     -5.5      5.5       0.8      2123
@@ -161,7 +161,7 @@ class CabbageVo:
 
 Session = openSession()
 session = Session()
-cabbage_preprocess = CabbagePreprocess()
+cabbage_df = CabbageDf()
 
 class CabbageDao(CabbageDto):
 
@@ -169,8 +169,8 @@ class CabbageDao(CabbageDto):
     def bulk():
         Session = openSession()
         session = Session()
-        cabbage_preprocess = CabbagePreprocess()
-        df = cabbage_preprocess.hook()
+        cabbage_df = CabbageDf()
+        df = cabbage_df.hook()
         print(df.head())
         session.bulk_insert_mappings(CabbageDto, df.to_dict(orient='records'))
         session.commit()
@@ -192,12 +192,12 @@ class CabbageDao(CabbageDto):
         session.commit() 
 
 
-class CabbageModel(object):
+class CabbageTf(object):
 
     def __init__(self):
         self.path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'models','cabbage')
 
-    def new_model(self):
+    def new(self):
         
         tf.global_variables_initializer()
         df = pd.read_sql_table('cabbages', engine.connect())
@@ -268,8 +268,8 @@ class CabbageService(object):
 
 
 if __name__ == "__main__":
-    c = CabbageModel()
-    c.new_model()
+    c = CabbageTf()
+    c.new()
 
     '''
     service = CabbageService()

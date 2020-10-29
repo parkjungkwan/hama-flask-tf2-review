@@ -10,7 +10,6 @@ import json
 # =======================                =======================
 # ==============================================================
 
-
 class ItemDto(db.Model):
     __tablename__='items'
     __table_args__={'mysql_collate':'utf8_general_ci'}

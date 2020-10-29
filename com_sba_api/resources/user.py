@@ -45,13 +45,13 @@ Embarked : a Port Name on Board C = Cherbourg, Q = Queenstown, S = Southhampton
 # ====================                     =====================
 # ==============================================================
 
-class UserPreprocess(object):
+class UserDf(object):
     def __init__(self):
         self.fileReader = FileReader()  
         self.data = os.path.join(os.path.abspath(os.path.dirname(__file__))+'\\data')
         self.odf = None
 
-    def hook(self):
+    def new(self):
         train = 'train.csv'
         test = 'test.csv'
         this = self.fileReader
@@ -279,25 +279,25 @@ class UserPreprocess(object):
 
     def accuracy_by_dtree(self, this):
         dtree = DecisionTreeClassifier()
-        score = cross_val_score(dtree, this.train, this.label, cv=UserPreprocess.create_k_fold(),\
+        score = cross_val_score(dtree, this.train, this.label, cv=UserDf.create_k_fold(),\
              n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
     def accuracy_by_rforest(self, this):
         rforest = RandomForestClassifier()
-        score = cross_val_score(rforest, this.train, this.label, cv=UserPreprocess.create_k_fold(), \
+        score = cross_val_score(rforest, this.train, this.label, cv=UserDf.create_k_fold(), \
             n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_nb(self, this):
         nb = GaussianNB()
-        score = cross_val_score(nb, this.train, this.label, cv=UserPreprocess.create_k_fold(),\
+        score = cross_val_score(nb, this.train, this.label, cv=UserDf.create_k_fold(),\
              n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
     
     def accuracy_by_knn(self, this):
         knn = KNeighborsClassifier()
-        score = cross_val_score(knn, this.train, this.label, cv=UserPreprocess.create_k_fold(),\
+        score = cross_val_score(knn, this.train, this.label, cv=UserDf.create_k_fold(),\
              n_jobs=1, scoring='accuracy')
         return round(np.mean(score) * 100, 2)
 
@@ -429,13 +429,13 @@ class UserVo:
 
 Session = openSession()
 session = Session()
-user_preprocess = UserPreprocess()
+user_df = UserDf()
 
 class UserDao(UserDto):
 
     @staticmethod   
     def bulk():
-        df = user_preprocess.hook()
+        df = user_df.new()
         print(df.head())
         session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
         session.commit()
