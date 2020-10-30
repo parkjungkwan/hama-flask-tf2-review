@@ -1,25 +1,55 @@
 from typing import List
 from flask import request
 from flask_restful import Resource, reqparse
-import json
 from flask import jsonify
 from com_sba_api.ext.db import db, openSession, engine
+from pathlib import Path
+from sqlalchemy import func
+from dataclasses import dataclass
+import json
 import pandas as pd
 import json
 import os
-from com_sba_api.util.file import FileReader
 import pandas as pd
 import numpy as np
-from pathlib import Path
-from sqlalchemy import func
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
+
+
+@dataclass
+class FileReader:
+    # def __init__(self, context, fname, train, test, id, label):
+    #     self._context = context  # _ 1ea default access, _ 2ea private access
+
+    # 3.7부터 간소화되서 dataclass 데코 후, key: value 형식으로 써도 됨 (롬복 형식)
+    context : str = ''
+    fname: str = ''
+    train: object = None
+    test: object = None
+    id : str = ''
+    lable : str = ''
+    
+
+    def new_file(self) -> str:
+        return os.path.join(self.context,self.fname)
+
+    def csv_to_dframe(self) -> object:
+        return pd.read_csv(self.new_file(), encoding='UTF-8', thousands=',')
+
+    def xls_to_dframe(self, header, usecols) -> object:
+        print(f'PANDAS VERSION: {pd.__version__}')
+        return pd.read_excel(self.new_file(), header = header, usecols = usecols)
+
+    def json_load(self):
+        return json.load(open(self.new_file(), encoding='UTF-8'))
+
 
 # ==============================================================
 # ====================                     =====================
 # ====================    Preprocessing    =====================
 # ====================                     =====================
 # ==============================================================
+
 
 class CabbageDf(object):
     def __init__(self):
@@ -318,12 +348,3 @@ class Cabbage(Resource):
         print(f'Predicted Cabbage Price is {price} won')
         return {'price': str(price)}, 200 
         
-
-    
-
-
-
-
-
-
-

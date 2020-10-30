@@ -1,15 +1,6 @@
 from typing import List
 from flask import request
 from flask_restful import Resource, reqparse
-import json
-from flask import jsonify
-from com_sba_api.ext.db import db, openSession
-import pandas as pd
-import json
-import os
-from com_sba_api.util.file import FileReader
-import pandas as pd
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier # rforest
 from sklearn.tree import DecisionTreeClassifier # dtree
 from sklearn.ensemble import RandomForestClassifier # rforest
@@ -22,6 +13,16 @@ from sklearn.model_selection import cross_val_score
 from sqlalchemy import func
 from pathlib import Path
 from sqlalchemy import and_, or_
+from com_sba_api.util.file import FileReader
+from flask import jsonify
+from com_sba_api.ext.db import db, openSession
+
+import json
+import pandas as pd
+import json
+import os
+import pandas as pd
+import numpy as np
 
 """
 context: /Users/bitcamp/SbaProjects
@@ -384,8 +385,8 @@ class UserDto(db.Model):
     embarked: int = db.Column(db.Integer)
     rank: int = db.Column(db.Integer)
 
-    orders = db.relationship('OrderDto', back_populates='user', lazy='dynamic')
-    prices = db.relationship('PriceDto', back_populates='user', lazy='dynamic')
+    # orders = db.relationship('OrderDto', back_populates='user', lazy='dynamic')
+    # prices = db.relationship('PriceDto', back_populates='user', lazy='dynamic')
     articles = db.relationship('ArticleDto', back_populates='user', lazy='dynamic')
 
     def __init__(self, user_id, password, name, pclass, gender, age_group, embarked, rank):
@@ -403,7 +404,6 @@ class UserDto(db.Model):
             password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
                 age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
 
-    @property
     def json(self):
         return {
             'userId' : self.user_id,
@@ -415,6 +415,8 @@ class UserDto(db.Model):
             'embarked' : self.embarked,
             'rank' : self.rank
         }
+    def __str__(self):
+        return f'User(user_id={self.user_id}'
 
     
 class UserVo:
@@ -477,8 +479,15 @@ class UserDao(UserDto):
     # for WHERE clause in the SELECT expression.
     
     @classmethod
-    def find_by_id(cls, user_id):
-        return session.query(UserDto).filter(UserDto.user_id.like(user_id)).one()
+    def find_one(cls, user_id):
+        
+        # return session.query(UserDto).filter(UserDto.user_id.like(user_id)).one()
+        query = cls.query\
+            .filter(cls.user_id.like(user_id))
+        df = pd.read_sql(query.statement, query.session.bind)
+        print('>>>>>>>>>>>>>>>>>')
+        print(json.loads(df.to_json(orient='records')))
+        return json.loads(df.to_json(orient='records'))
 
     
     '''
@@ -554,10 +563,8 @@ if __name__ == "__main__":
 
 
 parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
-parser.add_argument('userId', type=str, required=True,
-                                        help='This field should be a userId')
-parser.add_argument('password', type=str, required=True,
-                                        help='This field should be a password')
+parser.add_argument('id')
+parser.add_argument('password')
 
 class User(Resource):
     @staticmethod
@@ -577,11 +584,13 @@ class User(Resource):
     @staticmethod
     def get(id: str):
         try:
-            user = UserDao.find_by_id(id)
+            user = UserDao.find_one(id)
             if user:
-                return user.json()
+                print(f' !!!!!!!!!!!!!!{user} ')
+                return json.dumps(user), 200
         except Exception as e:
             return {'message': 'User not found'}, 404
+
 
     @staticmethod
     def update():

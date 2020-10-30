@@ -25,6 +25,7 @@ api = Api(article)
 api = Api(articles)
 
 def initialize_routes(api):
+    
     api.add_resource(Home, '/api')
     api.add_resource(Item, '/api/item/<string:id>')
     api.add_resource(Items,'/api/items')

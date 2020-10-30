@@ -73,7 +73,7 @@ class OrderDao(OrderDto):
                                     params(userId=1, orderDelivery='2017-07-05')
                                 
     '''
-    @classmethod
+    '''@classmethod
     def find_specific_day_orders(cls, user):
         orders = session.query(OrderDto).\
             filter(OrderDto.order_delivery == date(2017, 7, 5)).subquery()
@@ -82,7 +82,7 @@ class OrderDao(OrderDto):
         session.query(ItemDto, PriceDto, orders_alias).\
             join(PriceDto).\
                 outerjoin(orders_alias, ItemDto.orders).\
-                    filter(PriceDto.user_id == 1,PriceDto.available).all()
+                    filter(PriceDto.user_id == 1,PriceDto.available).all()'''
 
 
 

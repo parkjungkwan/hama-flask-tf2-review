@@ -17,10 +17,9 @@ class ItemDto(db.Model):
     item_id : int = db.Column(db.Integer, primary_key=True, index=True)
     item_name : str = db.Column(db.String(30))
     default_price = db.Column(db.Integer, nullable=True)
-   
 
-    orders = db.relationship('OrderDto', back_populates='item', lazy='dynamic')
-    prices = db.relationship('PriceDto', back_populates='item', lazy='dynamic')
+    #orders = db.relationship('OrderDto', back_populates='item', lazy='dynamic')
+    #prices = db.relationship('PriceDto', back_populates='item', lazy='dynamic')
     articles = db.relationship('ArticleDto', back_populates='item', lazy='dynamic')
 
     def __init__(self, item_name, default_price):

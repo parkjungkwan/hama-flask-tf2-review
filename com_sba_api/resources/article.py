@@ -26,7 +26,6 @@ class ArticleDto(db.Model):
         return f'art_id={self.art_id}, user_id={self.user_id}, item_id={self.item_id},\
             title={self.title}, content={self.content}'
 
-    @property
     def json(self):
         return {
             'art_id': self.art_id,
@@ -35,6 +34,12 @@ class ArticleDto(db.Model):
             'title' : self.title,
             'content' : self.content
         }
+class ArticleVo():
+    art_id: int = 0
+    user_id: str = ''
+    item_id: int = 0
+    title: str = ''
+    content: str = ''
 
 class ArticleDao(ArticleDto):
     
@@ -48,89 +53,78 @@ class ArticleDao(ArticleDto):
 
     @classmethod
     def find_by_id(cls, id):
-        return cls.query.filter_by(id == id).first()
+        return cls.query.filter(ArticleDto.art_id == id).one()
 
     @staticmethod
     def save(article):
         Session = openSession()
         session = Session()
-        newArticle = ArticleDto(title = article['user_id'], 
-                                content = article['content'], 
-                                user_id = article['user_id'], 
-                                item_id = article['item_id'])
-        session.add(newArticle)
+        session.add(article)
         session.commit()
 
     @staticmethod
-    def modify(article):
+    def update(article, article_id):
         Session = openSession()
         session = Session()
-        session.add(article)
+        session.query(ArticleDto).filter(ArticleDto.art_id == article.article_id)\
+            .update({ArticleDto.title: article.title,
+                        ArticleDto.content: article.content})
         session.commit()
 
     @classmethod
     def delete(cls,art_id):
         Session = openSession()
         session = Session()
-        data = cls.query.get(art_id)
-        session.delete(data)
+        cls.query(ArticleDto.art_id == art_id).delete()
         session.commit()
 
             
 
 
 
-
-
-
-# ==============================================================
-# ==============================================================
-# ==============================================================
-# ==============================================================
-# ==============================================================
-
-
-
-
-
-
-
-parser = reqparse.RequestParser()
-parser.add_argument('user_id', type=int, required=False, help='This field cannot be left blank')
-parser.add_argument('item_id', type=int, required=False, help='This field cannot be left blank')
-parser.add_argument('title', type=str, required=False, help='This field cannot be left blank')
-parser.add_argument('content', type=str, required=False, help='This field cannot be left blank')
 class Article(Resource):
+
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
         
-    @staticmethod    
-    def post():
+    def post(self):
+        parser = self.parser
+        parser.add_argument('user_id', type=int, required=False, help='This field cannot be left blank')
+        parser.add_argument('item_id', type=int, required=False, help='This field cannot be left blank')
+        parser.add_argument('title', type=str, required=False, help='This field cannot be left blank')
+        parser.add_argument('content', type=str, required=False, help='This field cannot be left blank')
         args = parser.parse_args()
         article = ArticleDto(args['title'], args['content'],\
-             args['user_id'], args['item_id'])
+                            args['user_id'], args['item_id'])
         try: 
-            ArticleDao.save(args)
+            ArticleDao.save(article)
             return {'code' : 0, 'message' : 'SUCCESS'}, 200    
         except:
             return {'message': 'An error occured inserting the article'}, 500
-        
-    
-    
-    def get(self, id):
+    @staticmethod
+    def get(id):
         article = ArticleDao.find_by_id(id)
         if article:
             return article.json()
         return {'message': 'Article not found'}, 404
-
-    def put(self, id):
-        data = Article.parser.parse_args()
-        article = ArticleDao.find_by_id(id)
-
-        article.title = data['title']
-        article.content = data['content']
-        article.save()
-        return article.json()
-
-
+    @staticmethod
+    def put(self, article, article_id):
+        parser = self.parser
+        parser.add_argument('art_id', type=int, required=False, help='This field cannot be left blank')
+        parser.add_argument('user_id', type=int, required=False, help='This field cannot be left blank')
+        parser.add_argument('item_id', type=int, required=False, help='This field cannot be left blank')
+        parser.add_argument('title', type=str, required=False, help='This field cannot be left blank')
+        parser.add_argument('content', type=str, required=False, help='This field cannot be left blank')
+        args = parser.parse_args()
+        article = ArticleVo()
+        article.title = args['title']
+        article.content = args['content']
+        article.art_id = args['art_id']
+        try: 
+            ArticleDao.update(article, article_id)
+            return {'message': 'Article was Updated successfully'}, 200
+        except:
+            return {'message': 'An error occured updating the article'}, 500
 
 
 class Articles(Resource):
