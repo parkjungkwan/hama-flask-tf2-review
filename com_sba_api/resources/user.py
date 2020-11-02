@@ -16,8 +16,6 @@ from sqlalchemy import and_, or_
 from com_sba_api.util.file import FileReader
 from flask import jsonify
 from com_sba_api.ext.db import db, openSession
-
-import json
 import pandas as pd
 import json
 import os
@@ -404,6 +402,14 @@ class UserDto(db.Model):
             password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
                 age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
 
+    
+    def __str__(self):
+        return f'User(user_id={self.user_id},\
+            password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
+                age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
+
+
+    
     def json(self):
         return {
             'userId' : self.user_id,
@@ -415,8 +421,7 @@ class UserDto(db.Model):
             'embarked' : self.embarked,
             'rank' : self.rank
         }
-    def __str__(self):
-        return f'User(user_id={self.user_id}'
+   
 
     
 class UserVo:
@@ -541,12 +546,10 @@ class UserDao(UserDto):
     
     @classmethod
     def login(cls, user):
-        query = cls.query\
-            .filter(cls.user_id.like(user.user_id))\
-            .filter(cls.password.like(user.password))
-        df = pd.read_sql(query.statement, query.session.bind)
-        print(json.loads(df.to_json(orient='records')))
-        return json.loads(df.to_json(orient='records'))
+        return session.query(cls)\
+            .filter(cls.user_id == user.user_id, 
+            cls.password == user.password)\
+            .one()
             
 
 
@@ -563,12 +566,13 @@ if __name__ == "__main__":
 
 
 parser = reqparse.RequestParser()  # only allow price changes, no name changes allowed
-parser.add_argument('id')
-parser.add_argument('password')
+
 
 class User(Resource):
     @staticmethod
     def post():
+        parser.add_argument('id')
+        parser.add_argument('password')
         args = parser.parse_args()
         print(f'User {args["id"]} added ')
         params = json.loads(request.get_data(), encoding='utf-8')
@@ -594,6 +598,8 @@ class User(Resource):
 
     @staticmethod
     def update():
+        parser.add_argument('userId')
+        parser.add_argument('password')
         args = parser.parse_args()
         print(f'User {args["id"]} updated ')
         return {'code':0, 'message': 'SUCCESS'}, 200
@@ -624,18 +630,24 @@ class Auth(Resource):
         
         return {'id': str(id)}, 200 
 
-
+'''
+json = json.loads() => dict
+dict = json.dumps() => json
+'''
 class Access(Resource):
     @staticmethod
     def post():
+        parser.add_argument('id')
+        parser.add_argument('password')
         args = parser.parse_args()
         user = UserVo()
-        user.user_id = args.userId
+        user.user_id = args.id
         user.password = args.password
         print(user.user_id)
         print(user.password)
         data = UserDao.login(user)
-        return data[0], 200
+        print(f'Login Result : {data}')
+        return data.json(), 200
 
 
 
