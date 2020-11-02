@@ -21,7 +21,7 @@ class FileReader:
     # def __init__(self, context, fname, train, test, id, label):
     #     self._context = context  # _ 1ea default access, _ 2ea private access
 
-    # 3.7부터 간소화되서 dataclass 데코 후, key: value 형식으로 써도 됨 (롬복 형식)
+    # 3.7부터 간소화되서 dataclass 데코 후, key: value 형식으로 써도 됨
     context : str = ''
     fname: str = ''
     train: object = None
@@ -65,7 +65,7 @@ class CabbageDf(object):
         print(f'{this.fname}')
         return pd.read_csv(Path(self.data, this.fname)) 
 
-    def new(self):
+    def create(self):
         this = self.fileReader
         price_data = 'price_data.csv'
         this.train = self.new_train(price_data)
@@ -200,7 +200,7 @@ class CabbageDao(CabbageDto):
         Session = openSession()
         session = Session()
         cabbage_df = CabbageDf()
-        df = cabbage_df.hook()
+        df = cabbage_df.create()
         print(df.head())
         session.bulk_insert_mappings(CabbageDto, df.to_dict(orient='records'))
         session.commit()

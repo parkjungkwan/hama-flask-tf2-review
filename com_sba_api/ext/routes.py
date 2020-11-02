@@ -27,9 +27,9 @@ api = Api(articles)
 def initialize_routes(api):
     
     api.add_resource(Home, '/api')
-    api.add_resource(Item, '/api/item/<string:id>')
+    api.add_resource(Item, '/api/item/<string:itemId>')
     api.add_resource(Items,'/api/items')
-    api.add_resource(User, '/api/user/<string:id>')
+    api.add_resource(User, '/api/user/<string:userId>')
     api.add_resource(Users, '/api/users')
     api.add_resource(Auth, '/api/auth')
     api.add_resource(Access, '/api/access')
