@@ -1,9 +1,9 @@
 import logging
 from flask import Blueprint
 from flask_restful import Api
-from com_sba_api.resources.home import Home
-from com_sba_api.resources.item import Item, Items
-from com_sba_api.resources.user import User, Users, Access
+from com_sba_api.cmm.hom.resource.home import Home
+from com_sba_api.cop.itm.resource.item import Item, Items
+from com_sba_api.uss.resource.user import User, Users, Access
 from com_sba_api.resources.article import Article, Articles
 from com_sba_api.resources.cabbage import Cabbage
 
