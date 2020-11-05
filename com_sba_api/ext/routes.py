@@ -2,9 +2,13 @@ import logging
 from flask import Blueprint
 from flask_restful import Api
 from com_sba_api.cmm.hom.resource.home import Home
+from com_sba_api.cop.cab.resource.cabbage import Review, Reviews
+from com_sba_api.cop.rvw.resource.review import Review, Reviews
 from com_sba_api.cop.itm.resource.item import Item, Items
-from com_sba_api.uss.resource.user import User, Users, Access
-from com_sba_api.resources.article import Article, Articles
+from com_sba_api.cop.sto.resource.stock import Stock, Stocks
+from com_sba_api.usr.resource.user import User, Users
+from com_sba_api.usr.resource.access import Access
+from com_sba_api.cop.rvw.model.review_dto import ReviewVo
 from com_sba_api.resources.cabbage import Cabbage
 
 home = Blueprint('home', __name__, url_prefix='/api')
@@ -23,15 +27,17 @@ api = Api(article)
 api = Api(articles)
 
 def initialize_routes(api):
-    
+    review = ReviewVo()
+
+    api.add_resource(TodoNext, '/next', resource_class_kwargs={ 'smart_engine': smart_engine })
     api.add_resource(Home, '/api')
-    api.add_resource(Item, '/api/item/<string:itemId>')
+    api.add_resource(Item, '/api/item', '/api/item/<item_id>')
     api.add_resource(Items,'/api/items')
-    api.add_resource(User, '/api/user')
+    api.add_resource(User, '/api/user', '/api/user/<user_id>')
     api.add_resource(Users, '/api/users')
     api.add_resource(Access, '/api/access')
-    api.add_resource(Article, '/api/article')
-    api.add_resource(Articles, '/api/articles/')
+    api.add_resource(Review, '/api/review', resource_class_kwargs={ 'review': review })
+    api.add_resource(Reviews, '/api/articles/')
     api.add_resource(Cabbage, '/api/cabbage')
 
 @user.errorhandler(500)

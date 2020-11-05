@@ -1,9 +1,9 @@
 from flask_restful import Resource, reqparse
-from com_sba_api.cop.cpp.model.cabbage_service import CabbageService
-from com_sba_api.cop.cpp.model.cabbage_dto import CabbageVo
+from com_sba_api.cop.cab.model.cabbage_service import CabbageService
+from com_sba_api.cop.cab.model.cabbage_dto import CabbageVo
 parser = reqparse.RequestParser()
 
-class CabbagePricePrediction(Resource):
+class Cabbage(Resource):
         
     @staticmethod
     def post():

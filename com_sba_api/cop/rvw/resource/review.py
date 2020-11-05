@@ -1,18 +1,22 @@
-from flask_restful import Resource, reqparse
-from com_sba_api.cop.raa.model.review_dao import ReviewDao
-from com_sba_api.cop.raa.model.review_dto import ReviewDto, ReviewVo
+from flask_restful import Resource, reqparse, fields, marshal_with
+from com_sba_api.cop.rvw.model.review_dao import ReviewDao
+from com_sba_api.cop.rvw.model.review_dto import ReviewDto, ReviewVo
 
-class ReviewAppraisalAnalysis(Resource):
+review_fields = {
+    'title': fields.String,
+    'content': fields.String,
+    'user_id': fields.String,
+    'item_id': fields.Integer
+}
+
+class Review(Resource):
     
     def __init__(self):
         self.parser = reqparse.RequestParser()
-        
+
+    @marshal_with(review_fields)    
     def post(self):
         parser = self.parser
-        parser.add_argument('user_id', type=int, required=False, help='This field cannot be left blank')
-        parser.add_argument('item_id', type=int, required=False, help='This field cannot be left blank')
-        parser.add_argument('title', type=str, required=False, help='This field cannot be left blank')
-        parser.add_argument('content', type=str, required=False, help='This field cannot be left blank')
         args = parser.parse_args()
         review = ReviewDto(args['title'], args['content'],\
                             args['user_id'], args['item_id'])
@@ -47,3 +51,7 @@ class ReviewAppraisalAnalysis(Resource):
             return {'message': 'An error occured updating the review'}, 500
 
 
+class Reviews(Resource):
+    def get(self):
+        return {'articles': list(map(lambda article: article.json(), ReviewDao.find_all()))}
+        # return {'articles':[article.json() for article in ArticleDao.find_all()]}

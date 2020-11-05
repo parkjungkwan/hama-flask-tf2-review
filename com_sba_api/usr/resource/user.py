@@ -21,8 +21,8 @@ import json
 import os
 import pandas as pd
 import numpy as np
-from com_sba_api.uia.model.user_dto import UserDto
-from com_sba_api.uia.model.user_dao import UserDao
+from com_sba_api.usr.model.user_dto import UserDto
+from com_sba_api.usr.model.user_dao import UserDao
 '''
 json = json.loads() => dict
 dict = json.dumps() => json
@@ -48,7 +48,6 @@ class User(Resource):
             print(f'User ID is {userId} ')
             user = UserDao.find_one(userId)
             if user:
-                print(f' !!!!!!!!!!!!!!{user} ')
                 return json.dumps(user.json()), 200
         except Exception as e:
             return {'message': 'User not found'}, 404

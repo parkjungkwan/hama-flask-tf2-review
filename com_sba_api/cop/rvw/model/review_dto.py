@@ -7,7 +7,7 @@ class ReviewDto(db.Model):
     __tablename__ = "reviews"
     __table_args__={'mysql_collate':'utf8_general_ci'}
 
-    art_id: int = db.Column(db.Integer, primary_key=True, index=True)
+    rvw_id: int = db.Column(db.Integer, primary_key=True, index=True)
     title: str = db.Column(db.String(100))
     content: str = db.Column(db.String(500))
 
@@ -23,19 +23,19 @@ class ReviewDto(db.Model):
         self.item_id = item_id
 
     def __repr__(self):
-        return f'art_id={self.art_id}, user_id={self.user_id}, item_id={self.item_id},\
+        return f'rvw_id={self.rvw_id}, user_id={self.user_id}, item_id={self.item_id},\
             title={self.title}, content={self.content}'
 
     def json(self):
         return {
-            'art_id': self.art_id,
+            'rvw_id': self.rvw_id,
             'user_id': self.user_id,
             'item_id' : self.item_id,
             'title' : self.title,
             'content' : self.content
         }
-class ArticleVo():
-    art_id: int = 0
+class ReviewVo():
+    rvw_id: int = 0
     user_id: str = ''
     item_id: int = 0
     title: str = ''
