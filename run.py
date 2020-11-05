@@ -1,7 +1,11 @@
 
 from main import app
 app.run(host='127.0.0.1', port='8080', debug=True)
-
+@app.route('/')
+@app.route('/<name>')
+def index(name="Mona"):
+    #name= request.args.get('name', name)
+    return "Hello from {}".format(name)
 '''
 from flask import Flask
 from flask_restful import Resource, Api

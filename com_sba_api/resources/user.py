@@ -16,8 +16,6 @@ from sqlalchemy import and_, or_
 from com_sba_api.util.file import FileReader
 from flask import jsonify
 from com_sba_api.ext.db import db, openSession
-
-import json
 import pandas as pd
 import json
 import os
@@ -343,12 +341,6 @@ class UserDf(object):
         return sumdf
             
 
-
-
-
-
-
-
 '''
 user_id password                                               name  pclass  gender age_group  embarked  rank
 0         1        1                            Braund, Mr. Owen Harris       3       0         4         1     1
@@ -404,6 +396,14 @@ class UserDto(db.Model):
             password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
                 age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
 
+    
+    def __str__(self):
+        return f'User(user_id={self.user_id},\
+            password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
+                age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
+
+
+    
     def json(self):
         return {
             'userId' : self.user_id,
@@ -415,10 +415,7 @@ class UserDto(db.Model):
             'embarked' : self.embarked,
             'rank' : self.rank
         }
-    def __str__(self):
-        return f'User(user_id={self.user_id},\
-            password={self.password},name={self.name}, pclass={self.pclass}, gender={self.gender}, \
-                age_group={self.age_group}, embarked={self.embarked}, rank={self.rank})'
+   
 
     
 class UserVo:
@@ -437,14 +434,6 @@ user_df = UserDf()
 
 class UserDao(UserDto):
 
-    @staticmethod   
-    def bulk():
-        df = user_df.create()
-        print(df.head())
-        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
-        session.commit()
-        session.close()
-
     @staticmethod
     def count():
         return session.query(func.count(UserDto.user_id)).one()
@@ -454,22 +443,26 @@ class UserDao(UserDto):
         db.session.add(user)
         db.session.commit()
 
-    @staticmethod
-    def update(user):
-        db.session.add(user)
-        db.session.commit()
+    @classmethod
+    def update(cls, user):
+        session.query(cls).filter(cls.user_id == user['userId'])\
+            .update({cls.password:user['password'],\
+                cls.pclass:user['pclass'],\
+                cls.embarked:user['embarked']})                                                        
+        session.commit()
 
     @classmethod
-    def delete(cls,id):
-        data = cls.query.get(id)
+    def delete(cls,user_id):
+        data = cls.query.get(user_id)
         db.session.delete(data)
         db.session.commit()
 
     @classmethod
     def find_all(cls):
-        sql = cls.query
-        df = pd.read_sql(sql.statement, sql.session.bind)
-        return json.loads(df.to_json(orient='records'))
+        # sql = cls.query
+        # df = pd.read_sql(sql.statement, sql.session.bind)
+        # return json.loads(df.to_json(orient='records'))
+        return session.query(cls).all()
 
     
     '''
@@ -481,9 +474,9 @@ class UserDao(UserDto):
     # for WHERE clause in the SELECT expression.
     
     @classmethod
-    def find_one(cls, id):
+    def find_one(cls, user_id):
         return session.query(cls)\
-            .filter((cls.user_id.like(id))).one()
+            .filter(cls.user_id == user_id).one()
     '''
     SELECT *
     FROM users
@@ -540,11 +533,12 @@ class UserDao(UserDto):
     WHERE user_id LIKE '1' AND password LIKE '1'
     '''
     @classmethod
-    def login(cls,user): 
-        print(f'[USERID] {user.user_id}')
-        print(f'[PASSWORD] {user.password}')
+    def login(cls, user):
         return session.query(cls)\
-            .filter(cls.user_id == user.user_id, cls.password == user.password).one()
+            .filter(cls.user_id == user.user_id, 
+            cls.password == user.password).one()
+            
+
 
         
 if __name__ == "__main__":
@@ -558,26 +552,19 @@ if __name__ == "__main__":
 # =====================                  =======================
 # ==============================================================
 
-parser = reqparse.RequestParser() 
 
+parser = reqparse.RequestParser() 
 
 class User(Resource):
     @staticmethod
     def post():
+        print(f'[ User Signup Resource Enter ] ')
+        body = request.get_json()
+        user = UserDto(**body)
+        UserDao.save(user)
+        user_id = user.user_id
         
-        parser.add_argument('userId')
-        parser.add_argument('password')
-        args = parser.parse_args()
-        print(f'User {args["userId"]} added ')
-        params = json.loads(request.get_data(), encoding='utf-8')
-        if len(params) == 0:
-
-            return 'No parameter'
-
-        params_str = ''
-        for key in params.keys():
-            params_str += 'key: {}, value: {}<br>'.format(key, params[key])
-        return {'code':0, 'message': 'SUCCESS'}, 200
+        return {'userId': str(user_id)}, 200 
 
     @staticmethod
     def get(userId: str):
@@ -592,51 +579,67 @@ class User(Resource):
 
 
     @staticmethod
-    def update():
+    def put():
+        print(f'[ User Put Resource Enter ] ')
+        parser.add_argument('userId')
+        parser.add_argument('password')
+        parser.add_argument('pclass')
+        parser.add_argument('embarked')
         args = parser.parse_args()
-        print(f'User {args["userId"]} updated ')
-        return {'code':0, 'message': 'SUCCESS'}, 200
+        UserDao.update(args)
+        user = UserDao.find_one(args.userId)
+        if args.password == user.password and\
+        args.pclass == user.pclass and\
+        args.embarked == user.embarked :
+            print(f'User Update Success')
+            return user.json(), 200
+        else: 
+            print(f'User Update Failure')
+            return {'message': 'User not found'}, 404
+        
 
     @staticmethod
     def delete():
+        print(f'[ User Delete Resource Enter ] ')
         args = parser.parse_args()
         print(f'User {args["userId"]} deleted')
         return {'code' : 0, 'message' : 'SUCCESS'}, 200    
 
 class Users(Resource):
+            
     @staticmethod
     def post():
-        ud = UserDao()
-        ud.bulk('users')
+        print(f'[ User Bulk Resource Enter ] ')
+        df = user_df.create()
+        print(df.head())
+        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
+        session.commit()
+        session.close()
     @staticmethod
     def get():
+        print(f'[ User List Resource Enter ] ')
         data = UserDao.find_all()
-        return data, 200
-
-class Auth(Resource):
-    @staticmethod
-    def post():
-        body = request.get_json()
-        user = UserDto(**body)
-        UserDao.save(user)
-        user_id = user.user_id
-        
-        return {'userId': str(user_id)}, 200 
+        return json.dumps(data), 200
 
 
+'''
+json = json.loads() => dict
+dict = json.dumps() => json
+'''
 class Access(Resource):
+    print(f'[ User Login Resource Enter ] ')
     @staticmethod
     def post():
         parser.add_argument('userId')
         parser.add_argument('password')
         args = parser.parse_args()
         user = UserVo()
+        print(f'[ ID ] {args.userId} \n [ Password ] {args.password}')
         user.user_id = args.userId
         user.password = args.password
         data = UserDao.login(user)
-        print('======================')
-        print(data)
-        return json.dumps(data.json()), 200
+        print(f'Login Result : {data}')
+        return data.json(), 200
 
 
 
